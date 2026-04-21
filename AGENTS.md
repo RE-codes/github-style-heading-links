@@ -43,4 +43,5 @@
 - Prefer focused pure-function tests for parsing and slug logic before integration-style behavior.
 - Verify behavior carefully around Obsidian APIs, cache timing, DOM/events, and mode differences.
 - Use the local dev vault path from `OBSIDIAN_VAULT_PLUGIN_DIR`.
+- Prefer existing `package.json` scripts over ad hoc commands when an equivalent script exists.
 - Use copied or synced plugin artifacts for Windows Obsidian when working from WSL.
