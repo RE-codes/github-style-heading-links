@@ -61,6 +61,10 @@ describe("slugify", () => {
   it("returns an empty slug for empty input", () => {
     expect(slugify("")).toBe("");
   });
+
+  it("preserves meaningful underscores", () => {
+    expect(slugify("## snake_case")).toBe("snake_case");
+  });
 });
 
 describe("buildSlugTable", () => {
@@ -78,6 +82,10 @@ describe("buildSlugTable", () => {
       "bar",
       "foo-1"
     ]);
+  });
+
+  it("slugifies raw markdown headings", () => {
+    expect(buildSlugTable(["## Foo **Bar**"])).toEqual(["foo-bar"]);
   });
 });
 

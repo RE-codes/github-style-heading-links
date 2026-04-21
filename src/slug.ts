@@ -8,7 +8,7 @@ export function stripMarkdown(raw: string): string {
     .replace(/\[([^\]]*)\]\([^)]+\)/g, "$1")
     .replace(/<[^>]+>/g, "")
     .replace(/\*/g, "")
-    .replace(/_/g, "")
+    .replace(/_([^_]+)_/g, "$1")
     .replace(/\p{Extended_Pictographic}/gu, "")
     .trim();
 }
@@ -17,6 +17,10 @@ export function slugify(raw: string): string {
   return new GithubSlugger().slug(stripMarkdown(raw));
 }
 
+/**
+ * Builds GitHub-style slugs from raw heading strings in document order.
+ * Each input may still include markdown heading markers and inline formatting.
+ */
 export function buildSlugTable(headings: string[]): string[] {
   const slugger = new GithubSlugger();
 
