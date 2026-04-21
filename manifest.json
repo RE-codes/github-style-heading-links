@@ -1,0 +1,9 @@
+{
+  "id": "github-style-heading-links",
+  "name": "GitHub Style Heading Links",
+  "version": "0.1.0",
+  "minAppVersion": "1.11.0",
+  "description": "Resolve GitHub-style heading fragment links in Obsidian.",
+  "author": "RE-codes",
+  "isDesktopOnly": false
+}
