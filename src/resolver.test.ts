@@ -1,32 +1,24 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
+import type { App } from "obsidian";
+import { TFile } from "obsidian";
 
 import { LinkResolver } from "./resolver";
+import { heading, makeApp, makeFile, makeFolder } from "./resolver.test-support";
 
 describe("LinkResolver", () => {
-  it("resolves an intra-document fragment against the source file", () => {
-    const sourceFile = { path: "Note.md" };
-    const app = {
-      vault: {
-        getAbstractFileByPath: (path: string) =>
-          path === sourceFile.path ? sourceFile : null
-      },
-      metadataCache: {
-        getFirstLinkpathDest: () => null,
-        getFileCache: (file: { path: string }) =>
-          file.path === sourceFile.path
-            ? {
-                headings: [
-                  {
-                    heading: "Foo",
-                    position: { start: { line: 12 } }
-                  }
-                ]
-              }
-            : null
-      }
-    };
+  let sourceFile: TFile;
 
-    const resolver = new LinkResolver(app as never);
+  beforeEach(() => {
+    sourceFile = makeFile("Note.md");
+  });
+
+  it("resolves an intra-document fragment against the source file", () => {
+    const app = makeApp({
+      files: [sourceFile],
+      headingEntries: [[sourceFile, [heading("Foo", 12)]]]
+    });
+
+    const resolver = new LinkResolver(app as unknown as App);
 
     expect(
       resolver.resolve(
@@ -46,33 +38,14 @@ describe("LinkResolver", () => {
   });
 
   it("resolves a cross-document fragment against the target file", () => {
-    const sourceFile = { path: "Note.md" };
-    const targetFile = { path: "Other.md" };
-    const app = {
-      vault: {
-        getAbstractFileByPath: (path: string) =>
-          path === sourceFile.path ? sourceFile : null
-      },
-      metadataCache: {
-        getFirstLinkpathDest: (linkpath: string, sourcePath: string) =>
-          linkpath === targetFile.path && sourcePath === sourceFile.path
-            ? targetFile
-            : null,
-        getFileCache: (file: { path: string }) =>
-          file.path === targetFile.path
-            ? {
-                headings: [
-                  {
-                    heading: "Bar",
-                    position: { start: { line: 7 } }
-                  }
-                ]
-              }
-            : null
-      }
-    };
+    const targetFile = makeFile("Other.md");
+    const app = makeApp({
+      files: [sourceFile],
+      resolvedFiles: [targetFile],
+      headingEntries: [[targetFile, [heading("Bar", 7)]]]
+    });
 
-    const resolver = new LinkResolver(app as never);
+    const resolver = new LinkResolver(app as unknown as App);
 
     expect(
       resolver.resolve(
@@ -92,19 +65,11 @@ describe("LinkResolver", () => {
   });
 
   it("returns null when the target file cannot be resolved", () => {
-    const sourceFile = { path: "Note.md" };
-    const app = {
-      vault: {
-        getAbstractFileByPath: (path: string) =>
-          path === sourceFile.path ? sourceFile : null
-      },
-      metadataCache: {
-        getFirstLinkpathDest: () => null,
-        getFileCache: () => null
-      }
-    };
+    const app = makeApp({
+      files: [sourceFile]
+    });
 
-    const resolver = new LinkResolver(app as never);
+    const resolver = new LinkResolver(app as unknown as App);
 
     expect(
       resolver.resolve(
@@ -121,31 +86,14 @@ describe("LinkResolver", () => {
   });
 
   it("returns the file with a null line when the heading slug is missing", () => {
-    const sourceFile = { path: "Note.md" };
-    const targetFile = { path: "Other.md" };
-    const app = {
-      vault: {
-        getAbstractFileByPath: (path: string) =>
-          path === sourceFile.path ? sourceFile : null
-      },
-      metadataCache: {
-        getFirstLinkpathDest: (linkpath: string) =>
-          linkpath === targetFile.path ? targetFile : null,
-        getFileCache: (file: { path: string }) =>
-          file.path === targetFile.path
-            ? {
-                headings: [
-                  {
-                    heading: "Bar",
-                    position: { start: { line: 7 } }
-                  }
-                ]
-              }
-            : null
-      }
-    };
+    const targetFile = makeFile("Other.md");
+    const app = makeApp({
+      files: [sourceFile],
+      resolvedFiles: [targetFile],
+      headingEntries: [[targetFile, [heading("Bar", 7)]]]
+    });
 
-    const resolver = new LinkResolver(app as never);
+    const resolver = new LinkResolver(app as unknown as App);
 
     expect(
       resolver.resolve(
@@ -165,23 +113,16 @@ describe("LinkResolver", () => {
   });
 
   it("returns the file with a null line when the parsed link has no fragment", () => {
-    const sourceFile = { path: "Note.md" };
-    const targetFile = { path: "Other.md" };
-    const app = {
-      vault: {
-        getAbstractFileByPath: (path: string) =>
-          path === sourceFile.path ? sourceFile : null
-      },
-      metadataCache: {
-        getFirstLinkpathDest: (linkpath: string) =>
-          linkpath === targetFile.path ? targetFile : null,
-        getFileCache: () => {
-          throw new Error("getFileCache should not be called when fragment is null");
-        }
+    const targetFile = makeFile("Other.md");
+    const app = makeApp({
+      files: [sourceFile],
+      resolvedFiles: [targetFile],
+      getFileCache: () => {
+        throw new Error("getFileCache should not be called when fragment is null");
       }
-    };
+    });
 
-    const resolver = new LinkResolver(app as never);
+    const resolver = new LinkResolver(app as unknown as App);
 
     expect(
       resolver.resolve(
@@ -201,37 +142,14 @@ describe("LinkResolver", () => {
   });
 
   it("resolves duplicate headings by matching the collision suffix", () => {
-    const sourceFile = { path: "Note.md" };
-    const app = {
-      vault: {
-        getAbstractFileByPath: (path: string) =>
-          path === sourceFile.path ? sourceFile : null
-      },
-      metadataCache: {
-        getFirstLinkpathDest: () => null,
-        getFileCache: (file: { path: string }) =>
-          file.path === sourceFile.path
-            ? {
-                headings: [
-                  {
-                    heading: "Foo",
-                    position: { start: { line: 3 } }
-                  },
-                  {
-                    heading: "Foo",
-                    position: { start: { line: 8 } }
-                  },
-                  {
-                    heading: "Foo",
-                    position: { start: { line: 15 } }
-                  }
-                ]
-              }
-            : null
-      }
-    };
+    const app = makeApp({
+      files: [sourceFile],
+      headingEntries: [
+        [sourceFile, [heading("Foo", 3), heading("Foo", 8), heading("Foo", 15)]]
+      ]
+    });
 
-    const resolver = new LinkResolver(app as never);
+    const resolver = new LinkResolver(app as unknown as App);
 
     expect(
       resolver.resolve(
@@ -251,29 +169,12 @@ describe("LinkResolver", () => {
   });
 
   it("resolves formatted headings using the slug helpers", () => {
-    const sourceFile = { path: "Note.md" };
-    const app = {
-      vault: {
-        getAbstractFileByPath: (path: string) =>
-          path === sourceFile.path ? sourceFile : null
-      },
-      metadataCache: {
-        getFirstLinkpathDest: () => null,
-        getFileCache: (file: { path: string }) =>
-          file.path === sourceFile.path
-            ? {
-                headings: [
-                  {
-                    heading: "**Bold**",
-                    position: { start: { line: 21 } }
-                  }
-                ]
-              }
-            : null
-      }
-    };
+    const app = makeApp({
+      files: [sourceFile],
+      headingEntries: [[sourceFile, [heading("**Bold**", 21)]]]
+    });
 
-    const resolver = new LinkResolver(app as never);
+    const resolver = new LinkResolver(app as unknown as App);
 
     expect(
       resolver.resolve(
@@ -290,5 +191,30 @@ describe("LinkResolver", () => {
       file: sourceFile,
       line: 21
     });
+  });
+
+  it("returns null when the source path resolves to a folder", () => {
+    const sourceFolder = makeFolder("Notes");
+    const app = makeApp({
+      files: [sourceFolder],
+      getFileCache: () => {
+        throw new Error("getFileCache should not be called for a folder");
+      }
+    });
+
+    const resolver = new LinkResolver(app as unknown as App);
+
+    expect(
+      resolver.resolve(
+        {
+          raw: "#foo",
+          pathPart: "",
+          fragment: "foo",
+          isExternal: false,
+          isAnchorOnly: true
+        },
+        sourceFolder.path
+      )
+    ).toBeNull();
   });
 });

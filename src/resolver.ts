@@ -1,4 +1,5 @@
-import type { App, TFile } from "obsidian";
+import { TFile } from "obsidian";
+import type { App } from "obsidian";
 
 import { buildSlugTable, findHeadingIndexBySlug } from "./slug";
 import type { ParsedLink } from "./linkParser";
@@ -14,7 +15,7 @@ export class LinkResolver {
   resolve(parsed: ParsedLink, sourcePath: string): ResolvedTarget | null {
     const file =
       parsed.pathPart === ""
-        ? (this.app.vault.getAbstractFileByPath(sourcePath) as TFile | null)
+        ? this.resolveSourceFile(sourcePath)
         : this.app.metadataCache.getFirstLinkpathDest(
             parsed.pathPart,
             sourcePath
@@ -24,7 +25,7 @@ export class LinkResolver {
       return null;
     }
 
-    if (parsed.fragment == null) {
+    if (parsed.fragment === null) {
       return {
         file,
         line: null
@@ -40,5 +41,11 @@ export class LinkResolver {
       line:
         headingIndex >= 0 ? headings[headingIndex].position.start.line : null
     };
+  }
+
+  private resolveSourceFile(sourcePath: string): TFile | null {
+    const sourceFile = this.app.vault.getAbstractFileByPath(sourcePath);
+
+    return sourceFile instanceof TFile ? sourceFile : null;
   }
 }
