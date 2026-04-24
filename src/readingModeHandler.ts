@@ -30,8 +30,15 @@ export function createReadingModeHandler(
   resolver: LinkResolver,
   onNavigate: (target: ResolvedTarget, newLeaf: boolean) => void
 ): (el: HTMLElement, ctx: MarkdownPostProcessorContext) => void {
+  const handledAnchors = new WeakSet<Element>();
+
   return (el, ctx) => {
     el.querySelectorAll("a").forEach((anchor) => {
+      if (handledAnchors.has(anchor)) {
+        return;
+      }
+
+      handledAnchors.add(anchor);
       anchor.addEventListener(
         "click",
         (event) =>

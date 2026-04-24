@@ -1,6 +1,12 @@
 import type { Extension } from "@codemirror/state";
 import { EditorView, ViewPlugin } from "@codemirror/view";
-import { editorLivePreviewField, type App, type WorkspaceLeaf } from "obsidian";
+import {
+  editorLivePreviewField,
+  type App,
+  type EventRef,
+  type TFile,
+  type WorkspaceLeaf
+} from "obsidian";
 
 import { parseHref } from "./linkParser";
 import { decideAction } from "./readingModeHandler";
@@ -85,25 +91,11 @@ export function createEditorExtension(
         const isLivePreview = this.view.state.field(editorLivePreviewField);
         const linkElement = target.closest("a, [data-href]");
         if (linkElement === null) {
-          handleSourceAuxClick(
-            target,
-            event,
-            this.view,
-            resolver,
-            sourcePath,
-            isLivePreview,
-            onNavigate
-          );
+          handleSourceAuxClick(target, event, this.view, resolver, sourcePath);
           return;
         }
 
-        handleRenderedAnchorAuxClick(
-          linkElement,
-          event,
-          resolver,
-          sourcePath,
-          onNavigate
-        );
+        handleRenderedAnchorAuxClick(linkElement, event, resolver, sourcePath);
       };
 
       private handleMouseUp = (event: MouseEvent) => {
@@ -116,26 +108,12 @@ export function createEditorExtension(
         const isLivePreview = this.view.state.field(editorLivePreviewField);
         const linkElement = target.closest("a, [data-href]");
         if (linkElement === null) {
-          handleSourceMouseUp(
-            target,
-            event,
-            this.view,
-            resolver,
-            sourcePath,
-            isLivePreview,
-            this.pendingMiddleClick
-          );
+          handleSourceMouseUp(event, this.pendingMiddleClick);
           this.pendingMiddleClick = null;
           return;
         }
 
-        handleRenderedAnchorMouseUp(
-          linkElement,
-          event,
-          resolver,
-          sourcePath,
-          this.pendingMiddleClick
-        );
+        handleRenderedAnchorMouseUp(event, this.pendingMiddleClick);
         this.pendingMiddleClick = null;
       };
 
@@ -214,10 +192,7 @@ export function handleSourceMouseDown(
   event.preventDefault();
   event.stopPropagation();
   event.stopImmediatePropagation();
-  onNavigate(
-    targetFile,
-    event.button === 1 || (isLivePreview && (event.ctrlKey || event.metaKey))
-  );
+  onNavigate(targetFile, isLivePreview && (event.ctrlKey || event.metaKey));
 
   return targetFile;
 }
@@ -278,24 +253,21 @@ export function handleRenderedAnchorAuxClick(
   anchor: Element,
   event: MouseEvent,
   resolver: LinkResolver,
-  sourcePath: string,
-  _onNavigate: NavigateCallback
-): boolean {
+  sourcePath: string
+): void {
   const action = decideAction(anchor);
   if (action.kind === "ignore") {
-    return false;
+    return;
   }
 
   const target = resolver.resolve(parseHref(action.href), sourcePath);
   if (target === null) {
-    return false;
+    return;
   }
 
   event.preventDefault();
   event.stopPropagation();
   event.stopImmediatePropagation();
-
-  return true;
 }
 
 export function handleSourceAuxClick(
@@ -303,74 +275,58 @@ export function handleSourceAuxClick(
   event: MouseEvent,
   view: EditorView,
   resolver: LinkResolver,
-  sourcePath: string,
-  _isLivePreview: boolean,
-  _onNavigate: NavigateCallback
-): boolean {
+  sourcePath: string
+): void {
   const pos = view.posAtDOM(target);
   const line = view.state.doc.lineAt(pos);
   const href = extractMarkdownLinkHrefAtOffset(line.text, pos - line.from);
 
   if (href === null) {
-    return false;
+    return;
   }
 
   const targetFile = resolver.resolve(parseHref(href), sourcePath);
   if (targetFile === null) {
-    return false;
+    return;
   }
 
   event.preventDefault();
   event.stopPropagation();
   event.stopImmediatePropagation();
-
-  return true;
 }
 
 export function handleRenderedAnchorMouseUp(
-  anchor: Element,
   event: MouseEvent,
-  resolver: LinkResolver,
-  sourcePath: string,
   pendingMiddleClick: PendingMiddleClick | null
-): boolean {
+): void {
   if (event.button !== 1) {
-    return false;
+    return;
   }
 
   if (pendingMiddleClick === null) {
-    return false;
+    return;
   }
 
   event.preventDefault();
   event.stopPropagation();
   event.stopImmediatePropagation();
-
-  return true;
 }
 
 export function handleSourceMouseUp(
-  target: Element,
   event: MouseEvent,
-  view: EditorView,
-  resolver: LinkResolver,
-  sourcePath: string,
-  _isLivePreview: boolean,
   pendingMiddleClick: PendingMiddleClick | null
-): boolean {
+): void {
   if (event.button !== 1) {
-    return false;
+    return;
   }
 
   if (pendingMiddleClick === null) {
-    return false;
+    return;
   }
 
   event.preventDefault();
   event.stopPropagation();
   event.stopImmediatePropagation();
-
-  return true;
 }
 
 export function retargetNativeMiddleClickTab(
@@ -378,17 +334,22 @@ export function retargetNativeMiddleClickTab(
   app: App,
   onNavigate: NavigateCallback
 ): void {
-  waitForNativeMiddleClickOpen(app, pending.previousLeaf).then(() => {
+  waitForNativeMiddleClickOpen(
+    app,
+    pending.previousLeaf,
+    pending.target.file
+  ).then(() => {
     onNavigate(pending.target, false, { fallbackToLine: false });
   });
 }
 
 async function waitForNativeMiddleClickOpen(
   app: App,
-  previousLeaf: WorkspaceLeaf | null
+  previousLeaf: WorkspaceLeaf | null,
+  targetFile: TFile
 ): Promise<void> {
   await waitForActiveLeafChange(app, previousLeaf);
-  await waitForFileOpen(app);
+  await waitForFileOpen(app, targetFile);
 }
 
 function waitForActiveLeafChange(
@@ -400,31 +361,45 @@ function waitForActiveLeafChange(
   }
 
   return new Promise((resolve) => {
+    let ref: EventRef | null = null;
     const timeout = window.setTimeout(() => {
-      app.workspace.offref(ref);
+      if (ref !== null) {
+        app.workspace.offref(ref);
+      }
       resolve();
     }, 250);
-    const ref = app.workspace.on("active-leaf-change", (leaf) => {
+    ref = app.workspace.on("active-leaf-change", (leaf) => {
       if (leaf === previousLeaf) {
         return;
       }
 
       window.clearTimeout(timeout);
-      app.workspace.offref(ref);
+      if (ref !== null) {
+        app.workspace.offref(ref);
+      }
       resolve();
     });
   });
 }
 
-function waitForFileOpen(app: App): Promise<void> {
+function waitForFileOpen(app: App, targetFile: TFile): Promise<void> {
   return new Promise((resolve) => {
+    let ref: EventRef | null = null;
     const timeout = window.setTimeout(() => {
-      app.workspace.offref(ref);
+      if (ref !== null) {
+        app.workspace.offref(ref);
+      }
       resolve();
     }, 250);
-    const ref = app.workspace.on("file-open", (file) => {
+    ref = app.workspace.on("file-open", (file) => {
+      if (file?.path !== targetFile.path) {
+        return;
+      }
+
       window.clearTimeout(timeout);
-      app.workspace.offref(ref);
+      if (ref !== null) {
+        app.workspace.offref(ref);
+      }
       resolve();
     });
   });

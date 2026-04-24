@@ -74,6 +74,54 @@ describe("retargetNativeMiddleClickTab", () => {
       }
     ]);
   });
+
+  it("waits for the target file to open before retargeting", async () => {
+    const sourceFile = makeFile("reading.md");
+    const otherFile = makeFile("other.md");
+    const previousLeaf = {} as WorkspaceLeaf;
+    const events: string[] = [];
+    const app = {
+      workspace: {
+        activeLeaf: {} as WorkspaceLeaf,
+        on: (name: string, callback: (...args: unknown[]) => void) => {
+          if (name === "file-open") {
+            setTimeout(() => {
+              events.push("wrong-file-open");
+              callback(otherFile);
+            }, 0);
+            setTimeout(() => {
+              events.push("target-file-open");
+              callback(sourceFile);
+            }, 5);
+          }
+
+          return {};
+        },
+        offref: () => {
+          return;
+        }
+      }
+    } as unknown as App;
+
+    retargetNativeMiddleClickTab(
+      {
+        previousLeaf,
+        target: { file: sourceFile, line: 4, heading: "Target Heading" }
+      },
+      app,
+      () => {
+        events.push("navigate");
+      }
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
+    expect(events).toEqual([
+      "wrong-file-open",
+      "target-file-open",
+      "navigate"
+    ]);
+  });
 });
 
 describe("extractMarkdownLinkHrefAtOffset", () => {
@@ -191,10 +239,7 @@ describe("handleRenderedAnchorMouseDown", () => {
       anchor,
       event,
       resolver,
-      sourceFile.path,
-      (target, newLeaf) => {
-        navigations.push({ target, newLeaf });
-      }
+      sourceFile.path
     );
 
     expect({ stoppedImmediately, navigations }).toEqual({
@@ -205,27 +250,17 @@ describe("handleRenderedAnchorMouseDown", () => {
 
   it("suppresses rendered middle-button mouseup without choosing a release target", () => {
     const sourceFile = makeFile("reading.md");
-    const app = makeApp({
-      files: [sourceFile],
-      headingEntries: [[sourceFile, [heading("Target Heading", 4)]]]
-    });
-    const resolver = new LinkResolver(app as unknown as App);
-    const anchor = document.createElement("a");
     const event = new MouseEvent("mouseup", { button: 1 });
     const navigations: unknown[] = [];
     const previousLeaf = {} as WorkspaceLeaf;
     let stoppedImmediately = false;
 
-    anchor.setAttribute("data-href", "#target-heading");
     event.stopImmediatePropagation = () => {
       stoppedImmediately = true;
     };
 
     handleRenderedAnchorMouseUp(
-      anchor,
       event,
-      resolver,
-      sourceFile.path,
       {
         previousLeaf,
         target: { file: sourceFile, line: 4, heading: "Target Heading" }
@@ -520,11 +555,7 @@ describe("handleSourceMouseDown", () => {
       event,
       view,
       resolver,
-      sourceFile.path,
-      false,
-      (resolvedTarget, newLeaf) => {
-        navigations.push({ target: resolvedTarget, newLeaf });
-      }
+      sourceFile.path
     );
 
     expect({ stoppedImmediately, navigations }).toEqual({
@@ -535,24 +566,7 @@ describe("handleSourceMouseDown", () => {
 
   it("suppresses source links on middle-button mouseup without choosing a release target", () => {
     const sourceFile = makeFile("reading.md");
-    const app = makeApp({
-      files: [sourceFile],
-      headingEntries: [[sourceFile, [heading("Target Heading", 4)]]]
-    });
-    const resolver = new LinkResolver(app as unknown as App);
-    const target = document.createElement("span");
     const event = new MouseEvent("mouseup", { button: 1 });
-    const view = {
-      posAtDOM: () => 1,
-      state: {
-        doc: {
-          lineAt: () => ({
-            from: 0,
-            text: "[same-file](#target-heading)"
-          })
-        }
-      }
-    } as unknown as EditorView;
     const navigations: unknown[] = [];
     const previousLeaf = {} as WorkspaceLeaf;
     let stoppedImmediately = false;
@@ -562,12 +576,7 @@ describe("handleSourceMouseDown", () => {
     };
 
     handleSourceMouseUp(
-      target,
       event,
-      view,
-      resolver,
-      sourceFile.path,
-      false,
       {
         previousLeaf,
         target: { file: sourceFile, line: 4, heading: "Target Heading" }

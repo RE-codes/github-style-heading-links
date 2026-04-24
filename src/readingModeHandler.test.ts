@@ -2,7 +2,11 @@
 
 import { describe, expect, it } from "vitest";
 
-import { decideAction, handleReadingAnchorEvent } from "./readingModeHandler";
+import {
+  createReadingModeHandler,
+  decideAction,
+  handleReadingAnchorEvent
+} from "./readingModeHandler";
 import type { App } from "obsidian";
 import { heading, makeApp, makeFile } from "./resolver.test-support";
 import { LinkResolver } from "./resolver";
@@ -69,6 +73,43 @@ describe("handleReadingAnchorEvent", () => {
 
     expect(navigations).toEqual([
       { target: { file: sourceFile, line: 4, heading: "Target Heading" }, newLeaf: true }
+    ]);
+  });
+});
+
+describe("createReadingModeHandler", () => {
+  it("does not attach duplicate listeners to the same anchor", () => {
+    const sourceFile = makeFile("reading.md");
+    const app = makeApp({
+      files: [sourceFile],
+      headingEntries: [[sourceFile, [heading("Target Heading", 4)]]]
+    });
+    const resolver = new LinkResolver(app as unknown as App);
+    const container = document.createElement("div");
+    const anchor = document.createElement("a");
+    const navigations: unknown[] = [];
+    const handler = createReadingModeHandler(
+      app as unknown as App,
+      resolver,
+      (target, newLeaf) => {
+        navigations.push({ target, newLeaf });
+      }
+    );
+
+    anchor.setAttribute("data-href", "#target-heading");
+    container.append(anchor);
+
+    handler(container, { sourcePath: sourceFile.path } as never);
+    handler(container, { sourcePath: sourceFile.path } as never);
+    anchor.dispatchEvent(
+      new MouseEvent("click", { bubbles: true, cancelable: true })
+    );
+
+    expect(navigations).toEqual([
+      {
+        target: { file: sourceFile, line: 4, heading: "Target Heading" },
+        newLeaf: false
+      }
     ]);
   });
 });
