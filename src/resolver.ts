@@ -7,6 +7,7 @@ import type { ParsedLink } from "./linkParser";
 export interface ResolvedTarget {
   file: TFile;
   line: number | null;
+  heading: string | null;
 }
 
 export class LinkResolver {
@@ -28,7 +29,8 @@ export class LinkResolver {
     if (parsed.fragment === null) {
       return {
         file,
-        line: null
+        line: null,
+        heading: null
       };
     }
 
@@ -39,7 +41,8 @@ export class LinkResolver {
     return {
       file,
       line:
-        headingIndex >= 0 ? headings[headingIndex].position.start.line : null
+        headingIndex >= 0 ? headings[headingIndex].position.start.line : null,
+      heading: headingIndex >= 0 ? headings[headingIndex].heading : null
     };
   }
 

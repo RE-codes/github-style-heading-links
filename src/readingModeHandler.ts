@@ -34,24 +34,53 @@ export function createReadingModeHandler(
     el.querySelectorAll("a").forEach((anchor) => {
       anchor.addEventListener(
         "click",
-        (event) => {
-          const action = decideAction(anchor);
-          if (action.kind === "ignore") {
-            return;
-          }
-
-          const parsed = parseHref(action.href);
-          const target = resolver.resolve(parsed, ctx.sourcePath);
-          if (target === null) {
-            return;
-          }
-
-          event.preventDefault();
-          event.stopPropagation();
-          onNavigate(target, event.ctrlKey || event.metaKey || event.button === 1);
-        },
+        (event) =>
+          handleReadingAnchorEvent(
+            anchor,
+            event,
+            resolver,
+            ctx.sourcePath,
+            onNavigate
+          ),
+        { capture: true }
+      );
+      anchor.addEventListener(
+        "auxclick",
+        (event) =>
+          handleReadingAnchorEvent(
+            anchor,
+            event,
+            resolver,
+            ctx.sourcePath,
+            onNavigate
+          ),
         { capture: true }
       );
     });
   };
+}
+
+export function handleReadingAnchorEvent(
+  anchor: Element,
+  event: MouseEvent,
+  resolver: LinkResolver,
+  sourcePath: string,
+  onNavigate: (target: ResolvedTarget, newLeaf: boolean) => void
+): boolean {
+  const action = decideAction(anchor);
+  if (action.kind === "ignore") {
+    return false;
+  }
+
+  const target = resolver.resolve(parseHref(action.href), sourcePath);
+  if (target === null) {
+    return false;
+  }
+
+  event.preventDefault();
+  event.stopPropagation();
+  event.stopImmediatePropagation();
+  onNavigate(target, event.ctrlKey || event.metaKey || event.button === 1);
+
+  return true;
 }

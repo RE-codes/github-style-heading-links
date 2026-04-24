@@ -2,7 +2,10 @@
 
 import { describe, expect, it } from "vitest";
 
-import { decideAction } from "./readingModeHandler";
+import { decideAction, handleReadingAnchorEvent } from "./readingModeHandler";
+import type { App } from "obsidian";
+import { heading, makeApp, makeFile } from "./resolver.test-support";
+import { LinkResolver } from "./resolver";
 
 describe("decideAction", () => {
   it("ignores external links", () => {
@@ -43,5 +46,29 @@ describe("decideAction", () => {
     anchor.setAttribute("href", "");
 
     expect(decideAction(anchor)).toEqual({ kind: "ignore" });
+  });
+});
+
+describe("handleReadingAnchorEvent", () => {
+  it("navigates middle-clicks in a new leaf", () => {
+    const sourceFile = makeFile("reading.md");
+    const app = makeApp({
+      files: [sourceFile],
+      headingEntries: [[sourceFile, [heading("Target Heading", 4)]]]
+    });
+    const resolver = new LinkResolver(app as unknown as App);
+    const anchor = document.createElement("a");
+    const event = new MouseEvent("auxclick", { button: 1 });
+    const navigations: unknown[] = [];
+
+    anchor.setAttribute("data-href", "#target-heading");
+
+    handleReadingAnchorEvent(anchor, event, resolver, sourceFile.path, (target, newLeaf) => {
+      navigations.push({ target, newLeaf });
+    });
+
+    expect(navigations).toEqual([
+      { target: { file: sourceFile, line: 4, heading: "Target Heading" }, newLeaf: true }
+    ]);
   });
 });
