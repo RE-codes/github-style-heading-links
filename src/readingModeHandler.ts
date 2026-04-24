@@ -6,7 +6,7 @@ export type Action =
   | { kind: "ignore" }
   | { kind: "resolve"; href: string };
 
-export function decideAction(anchor: HTMLAnchorElement): Action {
+export function decideAction(anchor: Element): Action {
   if (anchor.classList.contains("tag")) {
     return { kind: "ignore" };
   }
