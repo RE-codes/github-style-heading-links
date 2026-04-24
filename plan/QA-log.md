@@ -22,7 +22,7 @@ Current status after native-parity reset:
 - Live Preview rendered click, Ctrl-click, and middle-click match native behavior.
 - Live Preview unrendered click, Ctrl-click, and middle-click match native behavior.
 - Source mode click, Ctrl-click, and middle-click match native behavior.
-- Middle-click highlighting has a slight but noticeable delay because the plugin waits for Obsidian's native new tab/leaf before retargeting it to the exact heading.
+- Middle-click highlighting has a slight but noticeable delay because the plugin retargets Obsidian's native middle-click tab after it is created; Ctrl-click uses direct plugin navigation and does not show the same latency.
 
 ## Reading Mode
 
