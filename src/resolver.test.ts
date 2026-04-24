@@ -33,7 +33,8 @@ describe("LinkResolver", () => {
       )
     ).toEqual({
       file: sourceFile,
-      line: 12
+      line: 12,
+      heading: "Foo"
     });
   });
 
@@ -60,7 +61,8 @@ describe("LinkResolver", () => {
       )
     ).toEqual({
       file: targetFile,
-      line: 7
+      line: 7,
+      heading: "Bar"
     });
   });
 
@@ -108,7 +110,8 @@ describe("LinkResolver", () => {
       )
     ).toEqual({
       file: targetFile,
-      line: null
+      line: null,
+      heading: null
     });
   });
 
@@ -137,7 +140,8 @@ describe("LinkResolver", () => {
       )
     ).toEqual({
       file: targetFile,
-      line: null
+      line: null,
+      heading: null
     });
   });
 
@@ -164,7 +168,8 @@ describe("LinkResolver", () => {
       )
     ).toEqual({
       file: sourceFile,
-      line: 15
+      line: 15,
+      heading: "Foo"
     });
   });
 
@@ -189,7 +194,8 @@ describe("LinkResolver", () => {
       )
     ).toEqual({
       file: sourceFile,
-      line: 21
+      line: 21,
+      heading: "**Bold**"
     });
   });
 
