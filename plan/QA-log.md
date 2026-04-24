@@ -15,3 +15,4 @@
 
 - [x] RED: clicking `[same-file-2](#another-heading)` in `reading.md` should scroll to `## Another Heading`; before editor extension source fallback wiring, observed no plugin-handled scroll.
 - [x] GREEN: clicking `[same-file-2](#another-heading)` in Live Preview scrolls to `## Another Heading`.
+- [x] GREEN: clicking `[cross-file](Other.md#target-heading)` in Live Preview opens `Other.md` and scrolls to `## Target Heading`.
