@@ -41,10 +41,6 @@ export function createReadingModeHandler(
           }
 
           const parsed = parseHref(action.href);
-          if (!parsed.isAnchorOnly) {
-            return;
-          }
-
           const target = resolver.resolve(parsed, ctx.sourcePath);
           if (target === null) {
             return;
