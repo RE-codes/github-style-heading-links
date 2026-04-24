@@ -16,3 +16,6 @@
 - [x] RED: clicking `[same-file-2](#another-heading)` in `reading.md` should scroll to `## Another Heading`; before editor extension source fallback wiring, observed no plugin-handled scroll.
 - [x] GREEN: clicking `[same-file-2](#another-heading)` in Live Preview scrolls to `## Another Heading`.
 - [x] GREEN: clicking `[cross-file](Other.md#target-heading)` in Live Preview opens `Other.md` and scrolls to `## Target Heading`.
+- [x] GREEN: clicking `[external](https://example.com)` in Live Preview is not intercepted by the plugin; observed browser opens.
+- [x] GREEN: clicking `[[Wikilink]]` in Live Preview is not intercepted by the plugin; observed native navigation to `Wikilink`.
+- [x] GREEN: clicking `#reading-test-tag` in Live Preview is not intercepted by the plugin; observed native tag behavior.
