@@ -2,6 +2,7 @@
 
 - [GFM Fragment Links — Obsidian Plugin (MVP)](#gfm-fragment-links--obsidian-plugin-mvp)
   - [Context](#context)
+  - [Community Plugin Hardening](#community-plugin-hardening)
   - [Architecture Summary](#architecture-summary)
   - [Repo Layout](#repo-layout)
   - [Module Contracts](#module-contracts)
@@ -44,6 +45,19 @@ Obsidian resolves the file-only form, but **does not resolve kebab-case heading 
 **Ecosystem check.** As of 2026-04-19, no existing Obsidian community plugin solves this. `jerry-sky/obsidian-link-adapter-plugin` does format conversion only; the open feature request [forum.obsidian.md/t/30350](https://forum.obsidian.md/t/support-gfm-style-kebab-case-heading-slug-anchor-targets/30350) has been unresolved since Jan 2022. This is novel work.
 
 **Scope boundary.** MVP only. TOC generation and Obsidian↔GFM link conversion are deferred to a later plan.
+
+---
+
+## Community Plugin Hardening
+
+If this moves from personal-use MVP toward Obsidian Community plugin submission, pause after Step 6 and harden before broad release:
+
+- Replace or strengthen the editor-mode markdown-link extractor. The current line regex is acceptable for MVP TDD, but public release should handle escaped brackets, parentheses in URLs, multiple links per line, and other common Markdown edge cases. Prefer CodeMirror/Lezer syntax-tree link detection if Obsidian exposes a reliable parser state.
+- Confirm source-path correctness for editor extensions. `workspace.getActiveFile()` is pragmatic for active editor clicks, but split panes and multiple Markdown views should be tested. Prefer an exact editor-to-file association if available.
+- Add focused handler tests for event prevention, modifier/middle-click `newLeaf`, missing targets, unresolved fragments, native external/wiki/tag behavior, and Source mode fallback behavior.
+- Expand manual QA across Reading mode, Live Preview, Source mode, duplicate headings, formatted headings, URL-encoded paths, file-only links, missing files/headings, and Windows/macOS/Linux path sensitivity expectations.
+- Investigate hover preview popovers. If Obsidian's native preview still shows unresolved GFM fragments, either support that path or document the limitation clearly before release.
+- Prepare Community plugin release materials: README usage/limitations, versioning, manifest fields, release artifacts, and compatibility notes.
 
 ---
 
