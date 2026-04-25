@@ -34,7 +34,8 @@ describe("LinkResolver", () => {
     ).toEqual({
       file: sourceFile,
       line: 12,
-      heading: "Foo"
+      heading: "Foo",
+      requiresLineFallback: false
     });
   });
 
@@ -62,7 +63,8 @@ describe("LinkResolver", () => {
     ).toEqual({
       file: targetFile,
       line: 7,
-      heading: "Bar"
+      heading: "Bar",
+      requiresLineFallback: false
     });
   });
 
@@ -111,7 +113,8 @@ describe("LinkResolver", () => {
     ).toEqual({
       file: targetFile,
       line: null,
-      heading: null
+      heading: null,
+      requiresLineFallback: false
     });
   });
 
@@ -141,7 +144,8 @@ describe("LinkResolver", () => {
     ).toEqual({
       file: targetFile,
       line: null,
-      heading: null
+      heading: null,
+      requiresLineFallback: false
     });
   });
 
@@ -169,7 +173,37 @@ describe("LinkResolver", () => {
     ).toEqual({
       file: sourceFile,
       line: 15,
-      heading: "Foo"
+      heading: "Foo",
+      requiresLineFallback: true
+    });
+  });
+
+  it("requires line fallback for duplicate heading collision suffixes", () => {
+    const app = makeApp({
+      files: [sourceFile],
+      headingEntries: [
+        [sourceFile, [heading("Foo", 3), heading("Foo", 8), heading("Foo", 15)]]
+      ]
+    });
+
+    const resolver = new LinkResolver(app as unknown as App);
+
+    expect(
+      resolver.resolve(
+        {
+          raw: "#foo-1",
+          pathPart: "",
+          fragment: "foo-1",
+          isExternal: false,
+          isAnchorOnly: true
+        },
+        sourceFile.path
+      )
+    ).toEqual({
+      file: sourceFile,
+      line: 8,
+      heading: "Foo",
+      requiresLineFallback: true
     });
   });
 
@@ -195,7 +229,8 @@ describe("LinkResolver", () => {
     ).toEqual({
       file: sourceFile,
       line: 21,
-      heading: "**Bold**"
+      heading: "**Bold**",
+      requiresLineFallback: false
     });
   });
 

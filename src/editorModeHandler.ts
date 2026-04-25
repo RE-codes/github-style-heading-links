@@ -9,16 +9,13 @@ import {
 } from "obsidian";
 
 import { parseHref } from "./linkParser";
+import type { NavigateOptions } from "./navigation";
 import { decideAction } from "./readingModeHandler";
 import { LinkResolver, type ResolvedTarget } from "./resolver";
 
 type PendingMiddleClick = {
   previousLeaf: WorkspaceLeaf | null;
   target: ResolvedTarget;
-};
-
-export type NavigateOptions = {
-  fallbackToLine?: boolean;
 };
 
 type NavigateCallback = (
@@ -339,7 +336,13 @@ export function retargetNativeMiddleClickTab(
     pending.previousLeaf,
     pending.target.file
   ).then(() => {
-    onNavigate(pending.target, false, { fallbackToLine: false });
+    onNavigate(
+      pending.target,
+      false,
+      pending.target.requiresLineFallback
+        ? {}
+        : { fallbackToLine: false }
+    );
   });
 }
 

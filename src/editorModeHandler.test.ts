@@ -55,7 +55,12 @@ describe("retargetNativeMiddleClickTab", () => {
     retargetNativeMiddleClickTab(
       {
         previousLeaf,
-        target: { file: sourceFile, line: 4, heading: "Target Heading" }
+        target: {
+          file: sourceFile,
+          line: 4,
+          heading: "Target Heading",
+          requiresLineFallback: false
+        }
       },
       app,
       (target, newLeaf, options) => {
@@ -68,9 +73,73 @@ describe("retargetNativeMiddleClickTab", () => {
 
     expect(navigations).toEqual([
       {
-        target: { file: sourceFile, line: 4, heading: "Target Heading" },
+        target: {
+          file: sourceFile,
+          line: 4,
+          heading: "Target Heading",
+          requiresLineFallback: false
+        },
         newLeaf: false,
         options: { fallbackToLine: false }
+      }
+    ]);
+  });
+
+  it("uses line fallback when retargeting duplicate heading targets", async () => {
+    const sourceFile = makeFile("duplicates.md");
+    const previousLeaf = {} as WorkspaceLeaf;
+    const app = {
+      workspace: {
+        activeLeaf: {} as WorkspaceLeaf,
+        on: (name: string, callback: (...args: unknown[]) => void) => {
+          if (name === "file-open") {
+            setTimeout(() => callback(sourceFile), 0);
+          }
+
+          return {};
+        },
+        offref: () => {
+          return;
+        }
+      }
+    } as unknown as App;
+    const navigations: unknown[] = [];
+    let resolveNavigated: () => void = () => {
+      return;
+    };
+    const navigated = new Promise<void>((resolve) => {
+      resolveNavigated = resolve;
+    });
+
+    retargetNativeMiddleClickTab(
+      {
+        previousLeaf,
+        target: {
+          file: sourceFile,
+          line: 8,
+          heading: "Foo",
+          requiresLineFallback: true
+        }
+      },
+      app,
+      (target, newLeaf, options) => {
+        navigations.push({ target, newLeaf, options });
+        resolveNavigated();
+      }
+    );
+
+    await navigated;
+
+    expect(navigations).toEqual([
+      {
+        target: {
+          file: sourceFile,
+          line: 8,
+          heading: "Foo",
+          requiresLineFallback: true
+        },
+        newLeaf: false,
+        options: {}
       }
     ]);
   });
@@ -106,7 +175,12 @@ describe("retargetNativeMiddleClickTab", () => {
     retargetNativeMiddleClickTab(
       {
         previousLeaf,
-        target: { file: sourceFile, line: 4, heading: "Target Heading" }
+        target: {
+          file: sourceFile,
+          line: 4,
+          heading: "Target Heading",
+          requiresLineFallback: false
+        }
       },
       app,
       () => {
@@ -157,7 +231,12 @@ describe("handleRenderedAnchorMouseDown", () => {
     });
 
     expect(navigations).toEqual([
-      { file: sourceFile, line: 4, heading: "Target Heading" }
+      {
+        file: sourceFile,
+        line: 4,
+        heading: "Target Heading",
+        requiresLineFallback: false
+      }
     ]);
   });
 
@@ -185,7 +264,12 @@ describe("handleRenderedAnchorMouseDown", () => {
     );
 
     expect(navigations).toEqual([
-      { file: sourceFile, line: 4, heading: "Target Heading" }
+      {
+        file: sourceFile,
+        line: 4,
+        heading: "Target Heading",
+        requiresLineFallback: false
+      }
     ]);
   });
 
@@ -263,7 +347,12 @@ describe("handleRenderedAnchorMouseDown", () => {
       event,
       {
         previousLeaf,
-        target: { file: sourceFile, line: 4, heading: "Target Heading" }
+        target: {
+          file: sourceFile,
+          line: 4,
+          heading: "Target Heading",
+          requiresLineFallback: false
+        }
       }
     );
 
@@ -347,7 +436,15 @@ describe("handleSourceMouseDown", () => {
     );
 
     expect(navigations).toEqual([
-      { target: { file: sourceFile, line: 4, heading: "Target Heading" }, newLeaf: false }
+      {
+        target: {
+          file: sourceFile,
+          line: 4,
+          heading: "Target Heading",
+          requiresLineFallback: false
+        },
+        newLeaf: false
+      }
     ]);
   });
 
@@ -434,7 +531,12 @@ describe("handleSourceMouseDown", () => {
 
     expect(navigations).toEqual([
       {
-        target: { file: sourceFile, line: 4, heading: "Target Heading" },
+        target: {
+          file: sourceFile,
+          line: 4,
+          heading: "Target Heading",
+          requiresLineFallback: false
+        },
         newLeaf: false
       }
     ]);
@@ -476,7 +578,12 @@ describe("handleSourceMouseDown", () => {
 
     expect(navigations).toEqual([
       {
-        target: { file: sourceFile, line: 4, heading: "Target Heading" },
+        target: {
+          file: sourceFile,
+          line: 4,
+          heading: "Target Heading",
+          requiresLineFallback: false
+        },
         newLeaf: true
       }
     ]);
@@ -579,7 +686,12 @@ describe("handleSourceMouseDown", () => {
       event,
       {
         previousLeaf,
-        target: { file: sourceFile, line: 4, heading: "Target Heading" }
+        target: {
+          file: sourceFile,
+          line: 4,
+          heading: "Target Heading",
+          requiresLineFallback: false
+        }
       }
     );
 

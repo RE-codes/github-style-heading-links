@@ -8,6 +8,7 @@ export interface ResolvedTarget {
   file: TFile;
   line: number | null;
   heading: string | null;
+  requiresLineFallback: boolean;
 }
 
 export class LinkResolver {
@@ -30,19 +31,24 @@ export class LinkResolver {
       return {
         file,
         line: null,
-        heading: null
+        heading: null,
+        requiresLineFallback: false
       };
     }
 
     const headings = this.app.metadataCache.getFileCache(file)?.headings ?? [];
     const slugs = buildSlugTable(headings.map((heading) => heading.heading));
     const headingIndex = findHeadingIndexBySlug(slugs, parsed.fragment);
+    // GFM duplicate slugs resolve to later slug-table entries such as foo-1;
+    // the first occurrence can still use Obsidian's native #Heading lookup.
+    const requiresLineFallback = headingIndex > 0;
 
     return {
       file,
       line:
         headingIndex >= 0 ? headings[headingIndex].position.start.line : null,
-      heading: headingIndex >= 0 ? headings[headingIndex].heading : null
+      heading: headingIndex >= 0 ? headings[headingIndex].heading : null,
+      requiresLineFallback
     };
   }
 

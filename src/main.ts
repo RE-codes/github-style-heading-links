@@ -1,7 +1,7 @@
-import { MarkdownView, Plugin } from "obsidian";
+import { Plugin } from "obsidian";
 
-import { createEditorExtension, type NavigateOptions } from "./editorModeHandler";
-import { buildOpenLinkText } from "./navigation";
+import { createEditorExtension } from "./editorModeHandler";
+import { navigateToTarget, type NavigateOptions } from "./navigation";
 import { createReadingModeHandler } from "./readingModeHandler";
 import { LinkResolver, type ResolvedTarget } from "./resolver";
 
@@ -25,11 +25,6 @@ export default class GitHubStyleHeadingLinksPlugin extends Plugin {
     newLeaf: boolean,
     options: NavigateOptions = {}
   ): Promise<void> {
-    await this.app.workspace.openLinkText(buildOpenLinkText(target), "", newLeaf);
-    if (options.fallbackToLine !== false && !newLeaf && target.line !== null) {
-      this.app.workspace
-        .getActiveViewOfType(MarkdownView)
-        ?.setEphemeralState({ line: target.line });
-    }
+    await navigateToTarget(this.app, target, newLeaf, options);
   }
 }

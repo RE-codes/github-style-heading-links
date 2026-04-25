@@ -72,7 +72,15 @@ describe("handleReadingAnchorEvent", () => {
     });
 
     expect(navigations).toEqual([
-      { target: { file: sourceFile, line: 4, heading: "Target Heading" }, newLeaf: true }
+      {
+        target: {
+          file: sourceFile,
+          line: 4,
+          heading: "Target Heading",
+          requiresLineFallback: false
+        },
+        newLeaf: true
+      }
     ]);
   });
 });
@@ -107,7 +115,12 @@ describe("createReadingModeHandler", () => {
 
     expect(navigations).toEqual([
       {
-        target: { file: sourceFile, line: 4, heading: "Target Heading" },
+        target: {
+          file: sourceFile,
+          line: 4,
+          heading: "Target Heading",
+          requiresLineFallback: false
+        },
         newLeaf: false
       }
     ]);
