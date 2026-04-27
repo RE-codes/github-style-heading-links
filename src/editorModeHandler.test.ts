@@ -8,7 +8,10 @@ import {
   createEditorExtension,
   extractMarkdownLinkHrefAtOffset,
   handleRenderedAnchorAuxClick,
+  handleRenderedAnchorClick,
   handleRenderedAnchorMouseUp,
+  handleRenderedAnchorPointerDown,
+  handleRenderedAnchorPointerUp,
   handleSourceAuxClick,
   handleSourceMouseDown,
   handleSourceMouseUp,
@@ -213,6 +216,42 @@ describe("extractMarkdownLinkHrefAtOffset", () => {
 });
 
 describe("handleRenderedAnchorMouseDown", () => {
+  it("tracks rendered anchor links on left-button pointerdown", () => {
+    const sourceFile = makeFile("table.md");
+    const app = makeApp({
+      files: [sourceFile],
+      headingEntries: [[sourceFile, [heading("Table Target", 4)]]]
+    });
+    const resolver = new LinkResolver(app as unknown as App);
+    const anchor = document.createElement("a");
+    const event = new MouseEvent("pointerdown", { button: 0 });
+    const navigations: unknown[] = [];
+    let stoppedImmediately = false;
+
+    anchor.setAttribute("data-href", "#table-target");
+    event.stopImmediatePropagation = () => {
+      stoppedImmediately = true;
+    };
+
+    const target = handleRenderedAnchorPointerDown(
+      anchor,
+      event,
+      resolver,
+      sourceFile.path
+    );
+
+    expect({ target, stoppedImmediately, navigations }).toEqual({
+      target: {
+        file: sourceFile,
+        line: 4,
+        heading: "Table Target",
+        requiresLineFallback: false
+      },
+      stoppedImmediately: true,
+      navigations: []
+    });
+  });
+
   it("navigates rendered anchor links", () => {
     const sourceFile = makeFile("reading.md");
     const app = makeApp({
@@ -226,16 +265,26 @@ describe("handleRenderedAnchorMouseDown", () => {
 
     anchor.setAttribute("data-href", "#target-heading");
 
-    handleRenderedAnchorMouseDown(anchor, event, resolver, sourceFile.path, (target) => {
-      navigations.push(target);
-    });
+    handleRenderedAnchorMouseDown(
+      anchor,
+      event,
+      resolver,
+      sourceFile.path,
+      (target, newLeaf, options) => {
+        navigations.push({ target, newLeaf, options });
+      }
+    );
 
     expect(navigations).toEqual([
       {
-        file: sourceFile,
-        line: 4,
-        heading: "Target Heading",
-        requiresLineFallback: false
+        target: {
+          file: sourceFile,
+          line: 4,
+          heading: "Target Heading",
+          requiresLineFallback: false
+        },
+        newLeaf: false,
+        options: { fallbackToLine: false }
       }
     ]);
   });
@@ -258,51 +307,65 @@ describe("handleRenderedAnchorMouseDown", () => {
       event,
       resolver,
       sourceFile.path,
-      (target) => {
-        navigations.push(target);
+      (target, newLeaf, options) => {
+        navigations.push({ target, newLeaf, options });
       }
     );
 
     expect(navigations).toEqual([
       {
-        file: sourceFile,
-        line: 4,
-        heading: "Target Heading",
-        requiresLineFallback: false
+        target: {
+          file: sourceFile,
+          line: 4,
+          heading: "Target Heading",
+          requiresLineFallback: false
+        },
+        newLeaf: false,
+        options: { fallbackToLine: false }
       }
     ]);
   });
 
-  it("stops immediate propagation for handled rendered links", () => {
-    const sourceFile = makeFile("reading.md");
+  it("tracks rendered links on middle-button mousedown", () => {
+    const sourceFile = makeFile("callout.md");
     const app = makeApp({
       files: [sourceFile],
-      headingEntries: [[sourceFile, [heading("Target Heading", 4)]]]
+      headingEntries: [[sourceFile, [heading("Callout Target", 4)]]]
     });
     const resolver = new LinkResolver(app as unknown as App);
     const anchor = document.createElement("a");
-    const event = new MouseEvent("mousedown");
+    const event = new MouseEvent("mousedown", { button: 1 });
+    const navigations: unknown[] = [];
     let stoppedImmediately = false;
 
-    anchor.setAttribute("data-href", "#target-heading");
+    anchor.setAttribute("data-href", "#callout-target");
     event.stopImmediatePropagation = () => {
       stoppedImmediately = true;
     };
 
-    handleRenderedAnchorMouseDown(
+    const target = handleRenderedAnchorMouseDown(
       anchor,
       event,
       resolver,
       sourceFile.path,
-      () => {
-        return;
+      (resolvedTarget, newLeaf) => {
+        navigations.push({ target: resolvedTarget, newLeaf });
       }
     );
 
-    expect(stoppedImmediately).toBe(true);
+    expect({ target, stoppedImmediately, navigations }).toEqual({
+      target: {
+        file: sourceFile,
+        line: 4,
+        heading: "Callout Target",
+        requiresLineFallback: false
+      },
+      stoppedImmediately: false,
+      navigations: []
+    });
   });
 
-  it("suppresses rendered auxclick without navigating again", () => {
+  it("lets rendered auxclick reach Obsidian", () => {
     const sourceFile = makeFile("reading.md");
     const app = makeApp({
       files: [sourceFile],
@@ -327,12 +390,12 @@ describe("handleRenderedAnchorMouseDown", () => {
     );
 
     expect({ stoppedImmediately, navigations }).toEqual({
-      stoppedImmediately: true,
+      stoppedImmediately: false,
       navigations: []
     });
   });
 
-  it("suppresses rendered middle-button mouseup without choosing a release target", () => {
+  it("lets rendered middle-button mouseup reach Obsidian", () => {
     const sourceFile = makeFile("reading.md");
     const event = new MouseEvent("mouseup", { button: 1 });
     const navigations: unknown[] = [];
@@ -357,10 +420,104 @@ describe("handleRenderedAnchorMouseDown", () => {
     );
 
     expect({ stoppedImmediately, navigations }).toEqual({
-      stoppedImmediately: true,
+      stoppedImmediately: false,
       navigations: []
     });
   });
+
+  it("suppresses rendered left-button mouseup after handled pointerup", () => {
+    const sourceFile = makeFile("table.md");
+    const event = new MouseEvent("mouseup", { button: 0 });
+    const previousLeaf = {} as WorkspaceLeaf;
+    let stoppedImmediately = false;
+
+    event.stopImmediatePropagation = () => {
+      stoppedImmediately = true;
+    };
+
+    handleRenderedAnchorMouseUp(
+      event,
+      {
+        previousLeaf,
+        target: {
+          file: sourceFile,
+          line: 4,
+          heading: "Table Target",
+          requiresLineFallback: false
+        }
+      }
+    );
+
+    expect(stoppedImmediately).toBe(true);
+  });
+
+  it("navigates rendered left-button pointerup after handled pointerdown", () => {
+    const sourceFile = makeFile("table.md");
+    const event = new MouseEvent("pointerup", { button: 0 });
+    const previousLeaf = {} as WorkspaceLeaf;
+    const navigations: unknown[] = [];
+    let stoppedImmediately = false;
+
+    event.stopImmediatePropagation = () => {
+      stoppedImmediately = true;
+    };
+
+    handleRenderedAnchorPointerUp(
+      event,
+      {
+        previousLeaf,
+        target: {
+          file: sourceFile,
+          line: 4,
+          heading: "Table Target",
+          requiresLineFallback: false
+        }
+      },
+      (target, newLeaf, options) => {
+        navigations.push({ target, newLeaf, options });
+      }
+    );
+
+    expect({ stoppedImmediately, navigations }).toEqual({
+      stoppedImmediately: true,
+      navigations: [
+        {
+          target: {
+            file: sourceFile,
+            line: 4,
+            heading: "Table Target",
+            requiresLineFallback: false
+          },
+          newLeaf: false,
+          options: { fallbackToLine: false }
+        }
+      ]
+    });
+  });
+
+  it("suppresses rendered click after handled mousedown", () => {
+    const sourceFile = makeFile("callout.md");
+    const event = new MouseEvent("click", { button: 0 });
+    const previousLeaf = {} as WorkspaceLeaf;
+    let stoppedImmediately = false;
+
+    event.stopImmediatePropagation = () => {
+      stoppedImmediately = true;
+    };
+
+    handleRenderedAnchorClick(event, {
+      previousLeaf,
+      target: {
+        file: sourceFile,
+        line: 4,
+        heading: "Callout Target",
+        requiresLineFallback: false
+      }
+    });
+
+    expect(stoppedImmediately).toBe(true);
+  });
+
 });
 
 describe("handleSourceMouseDown", () => {
@@ -430,8 +587,8 @@ describe("handleSourceMouseDown", () => {
       resolver,
       sourceFile.path,
       false,
-      (resolvedTarget, newLeaf) => {
-        navigations.push({ target: resolvedTarget, newLeaf });
+      (resolvedTarget, newLeaf, options) => {
+        navigations.push({ target: resolvedTarget, newLeaf, options });
       }
     );
 
@@ -443,7 +600,8 @@ describe("handleSourceMouseDown", () => {
           heading: "Target Heading",
           requiresLineFallback: false
         },
-        newLeaf: false
+        newLeaf: false,
+        options: { fallbackToLine: false }
       }
     ]);
   });
@@ -698,6 +856,50 @@ describe("handleSourceMouseDown", () => {
     expect({ stoppedImmediately, navigations }).toEqual({
       stoppedImmediately: true,
       navigations: []
+    });
+  });
+
+  it("navigates unanchored left-button mouseup after rendered pointerdown", () => {
+    const sourceFile = makeFile("table.md");
+    const event = new MouseEvent("mouseup", { button: 0 });
+    const previousLeaf = {} as WorkspaceLeaf;
+    const navigations: unknown[] = [];
+    let stoppedImmediately = false;
+
+    event.stopImmediatePropagation = () => {
+      stoppedImmediately = true;
+    };
+
+    handleSourceMouseUp(
+      event,
+      {
+        previousLeaf,
+        target: {
+          file: sourceFile,
+          line: 4,
+          heading: "Table Target",
+          requiresLineFallback: false
+        }
+      },
+      (target, newLeaf, options) => {
+        navigations.push({ target, newLeaf, options });
+      }
+    );
+
+    expect({ stoppedImmediately, navigations }).toEqual({
+      stoppedImmediately: true,
+      navigations: [
+        {
+          target: {
+            file: sourceFile,
+            line: 4,
+            heading: "Table Target",
+            requiresLineFallback: false
+          },
+          newLeaf: false,
+          options: { fallbackToLine: false }
+        }
+      ]
     });
   });
 });

@@ -13,7 +13,7 @@ import type { NavigateOptions } from "./navigation";
 import { decideAction } from "./readingModeHandler";
 import { LinkResolver, type ResolvedTarget } from "./resolver";
 
-type PendingMiddleClick = {
+type PendingClick = {
   previousLeaf: WorkspaceLeaf | null;
   target: ResolvedTarget;
 };
@@ -31,7 +31,39 @@ export function createEditorExtension(
 ): Extension {
   return ViewPlugin.fromClass(
     class {
-      private pendingMiddleClick: PendingMiddleClick | null = null;
+      private pendingMiddleClick: PendingClick | null = null;
+      private pendingRenderedClick: PendingClick | null = null;
+      private handledRenderedPointerDown = false;
+
+      private handlePointerDown = (event: PointerEvent) => {
+        const target = event.target;
+        if (!(target instanceof Element)) {
+          return;
+        }
+
+        const sourcePath = app.workspace.getActiveFile()?.path ?? "";
+        const linkElement = target.closest("a, [data-href]");
+        if (linkElement === null) {
+          return;
+        }
+
+        const resolvedTarget = handleRenderedAnchorPointerDown(
+          linkElement,
+          event,
+          resolver,
+          sourcePath
+        );
+        if (event.button === 0 && resolvedTarget !== null) {
+          this.handledRenderedPointerDown = true;
+          this.pendingRenderedClick = {
+            previousLeaf: app.workspace.activeLeaf,
+            target: resolvedTarget
+          };
+          return;
+        }
+
+        this.handledRenderedPointerDown = false;
+      };
 
       private handleMouseDown = (event: MouseEvent) => {
         const target = event.target;
@@ -62,6 +94,11 @@ export function createEditorExtension(
           return;
         }
 
+        if (event.button === 0 && this.handledRenderedPointerDown) {
+          this.handledRenderedPointerDown = false;
+          return;
+        }
+
         const resolvedTarget = handleRenderedAnchorMouseDown(
           linkElement,
           event,
@@ -69,6 +106,12 @@ export function createEditorExtension(
           sourcePath,
           onNavigate
         );
+        if (event.button === 0 && resolvedTarget !== null) {
+          this.pendingRenderedClick = {
+            previousLeaf: app.workspace.activeLeaf,
+            target: resolvedTarget
+          };
+        }
         if (event.button === 1 && resolvedTarget !== null) {
           this.pendingMiddleClick = {
             previousLeaf: app.workspace.activeLeaf,
@@ -85,7 +128,6 @@ export function createEditorExtension(
         }
 
         const sourcePath = app.workspace.getActiveFile()?.path ?? "";
-        const isLivePreview = this.view.state.field(editorLivePreviewField);
         const linkElement = target.closest("a, [data-href]");
         if (linkElement === null) {
           handleSourceAuxClick(target, event, this.view, resolver, sourcePath);
@@ -101,20 +143,58 @@ export function createEditorExtension(
           return;
         }
 
-        const sourcePath = app.workspace.getActiveFile()?.path ?? "";
-        const isLivePreview = this.view.state.field(editorLivePreviewField);
         const linkElement = target.closest("a, [data-href]");
         if (linkElement === null) {
-          handleSourceMouseUp(event, this.pendingMiddleClick);
+          handleSourceMouseUp(
+            event,
+            event.button === 0 ? this.pendingRenderedClick : this.pendingMiddleClick,
+            event.button === 0 ? onNavigate : undefined
+          );
+          if (event.button === 0) {
+            this.pendingRenderedClick = null;
+          }
           this.pendingMiddleClick = null;
           return;
         }
 
-        handleRenderedAnchorMouseUp(event, this.pendingMiddleClick);
+        handleRenderedAnchorMouseUp(
+          event,
+          event.button === 0 ? this.pendingRenderedClick : this.pendingMiddleClick
+        );
+        if (event.button === 0) {
+          this.pendingRenderedClick = null;
+        }
         this.pendingMiddleClick = null;
       };
 
+      private handlePointerUp = (event: PointerEvent) => {
+        const target = event.target;
+        if (!(target instanceof Element)) {
+          return;
+        }
+
+        handleRenderedAnchorPointerUp(event, this.pendingRenderedClick, onNavigate);
+      };
+
+      private handleClick = (event: MouseEvent) => {
+        const target = event.target;
+        if (!(target instanceof Element)) {
+          return;
+        }
+
+        const linkElement = target.closest("a, [data-href]");
+        if (linkElement === null) {
+          return;
+        }
+
+        handleRenderedAnchorClick(event, this.pendingRenderedClick);
+        this.pendingRenderedClick = null;
+      };
+
       constructor(private view: EditorView) {
+        this.view.dom.addEventListener("pointerdown", this.handlePointerDown, {
+          capture: true
+        });
         this.view.dom.addEventListener("mousedown", this.handleMouseDown, {
           capture: true
         });
@@ -124,9 +204,18 @@ export function createEditorExtension(
         this.view.dom.addEventListener("mouseup", this.handleMouseUp, {
           capture: true
         });
+        this.view.dom.addEventListener("pointerup", this.handlePointerUp, {
+          capture: true
+        });
+        this.view.dom.addEventListener("click", this.handleClick, {
+          capture: true
+        });
       }
 
       destroy() {
+        this.view.dom.removeEventListener("pointerdown", this.handlePointerDown, {
+          capture: true
+        });
         this.view.dom.removeEventListener("mousedown", this.handleMouseDown, {
           capture: true
         });
@@ -134,6 +223,12 @@ export function createEditorExtension(
           capture: true
         });
         this.view.dom.removeEventListener("mouseup", this.handleMouseUp, {
+          capture: true
+        });
+        this.view.dom.removeEventListener("pointerup", this.handlePointerUp, {
+          capture: true
+        });
+        this.view.dom.removeEventListener("click", this.handleClick, {
           capture: true
         });
       }
@@ -189,7 +284,11 @@ export function handleSourceMouseDown(
   event.preventDefault();
   event.stopPropagation();
   event.stopImmediatePropagation();
-  onNavigate(targetFile, isLivePreview && (event.ctrlKey || event.metaKey));
+  onNavigate(
+    targetFile,
+    isLivePreview && (event.ctrlKey || event.metaKey),
+    getEditorNavigateOptions(targetFile)
+  );
 
   return targetFile;
 }
@@ -224,6 +323,36 @@ export function handleRenderedAnchorMouseDown(
   sourcePath: string,
   onNavigate: NavigateCallback
 ): ResolvedTarget | null {
+  if (event.button !== 0 && event.button !== 1) {
+    return null;
+  }
+
+  const action = decideAction(anchor);
+  if (action.kind === "ignore") {
+    return null;
+  }
+
+  const target = resolver.resolve(parseHref(action.href), sourcePath);
+  if (target === null) {
+    return null;
+  }
+
+  if (event.button === 0) {
+    onNavigate(target, event.ctrlKey || event.metaKey, getEditorNavigateOptions(target));
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+  }
+
+  return target;
+}
+
+export function handleRenderedAnchorPointerDown(
+  anchor: Element,
+  event: MouseEvent | PointerEvent,
+  resolver: LinkResolver,
+  sourcePath: string
+): ResolvedTarget | null {
   if (event.button !== 0) {
     return null;
   }
@@ -241,9 +370,12 @@ export function handleRenderedAnchorMouseDown(
   event.preventDefault();
   event.stopPropagation();
   event.stopImmediatePropagation();
-  onNavigate(target, event.ctrlKey || event.metaKey);
 
   return target;
+}
+
+function getEditorNavigateOptions(target: ResolvedTarget): NavigateOptions {
+  return target.requiresLineFallback ? {} : { fallbackToLine: false };
 }
 
 export function handleRenderedAnchorAuxClick(
@@ -261,10 +393,6 @@ export function handleRenderedAnchorAuxClick(
   if (target === null) {
     return;
   }
-
-  event.preventDefault();
-  event.stopPropagation();
-  event.stopImmediatePropagation();
 }
 
 export function handleSourceAuxClick(
@@ -294,13 +422,59 @@ export function handleSourceAuxClick(
 
 export function handleRenderedAnchorMouseUp(
   event: MouseEvent,
-  pendingMiddleClick: PendingMiddleClick | null
+  pendingClick: PendingClick | null
 ): void {
-  if (event.button !== 1) {
+  if (event.button !== 0 && event.button !== 1) {
     return;
   }
 
-  if (pendingMiddleClick === null) {
+  if (pendingClick === null) {
+    return;
+  }
+
+  if (event.button === 1) {
+    return;
+  }
+
+  event.preventDefault();
+  event.stopPropagation();
+  event.stopImmediatePropagation();
+}
+
+export function handleRenderedAnchorPointerUp(
+  event: MouseEvent | PointerEvent,
+  pendingRenderedClick: PendingClick | null,
+  onNavigate?: NavigateCallback
+): void {
+  if (event.button !== 0) {
+    return;
+  }
+
+  if (pendingRenderedClick === null) {
+    return;
+  }
+
+  if (onNavigate !== undefined) {
+    onNavigate(
+      pendingRenderedClick.target,
+      event.ctrlKey || event.metaKey,
+      getEditorNavigateOptions(pendingRenderedClick.target)
+    );
+  }
+  event.preventDefault();
+  event.stopPropagation();
+  event.stopImmediatePropagation();
+}
+
+export function handleRenderedAnchorClick(
+  event: MouseEvent,
+  pendingRenderedClick: PendingClick | null
+): void {
+  if (event.button !== 0) {
+    return;
+  }
+
+  if (pendingRenderedClick === null) {
     return;
   }
 
@@ -311,9 +485,10 @@ export function handleRenderedAnchorMouseUp(
 
 export function handleSourceMouseUp(
   event: MouseEvent,
-  pendingMiddleClick: PendingMiddleClick | null
+  pendingMiddleClick: PendingClick | null,
+  onNavigate?: NavigateCallback
 ): void {
-  if (event.button !== 1) {
+  if (event.button !== 0 && event.button !== 1) {
     return;
   }
 
@@ -321,13 +496,20 @@ export function handleSourceMouseUp(
     return;
   }
 
+  if (event.button === 0 && onNavigate !== undefined) {
+    onNavigate(
+      pendingMiddleClick.target,
+      event.ctrlKey || event.metaKey,
+      getEditorNavigateOptions(pendingMiddleClick.target)
+    );
+  }
   event.preventDefault();
   event.stopPropagation();
   event.stopImmediatePropagation();
 }
 
 export function retargetNativeMiddleClickTab(
-  pending: PendingMiddleClick,
+  pending: PendingClick,
   app: App,
   onNavigate: NavigateCallback
 ): void {
