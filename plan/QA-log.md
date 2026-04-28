@@ -28,7 +28,7 @@ Current status after native-parity reset:
 
 - Rendered Live Preview left-click resolves a rendered anchor, prevents source/table selection, navigates once, and suppresses any later native `click` for the same gesture.
 - Rendered Live Preview Ctrl-click follows the same path, opens one new tab, and suppresses any later native `click` for the same gesture.
-- Rendered Live Preview middle-click lets Obsidian create the new tab, then retargets that tab after native open events.
+- Rendered Live Preview middle-click stores the target on mousedown, navigates directly to one new tab on mouseup, and suppresses the later native `auxclick`.
 - Unrendered Live Preview and Source mode plain click only place the cursor.
 - Unrendered Live Preview and Source mode Ctrl-click navigate from the markdown source link.
 - Unrendered Live Preview and Source mode middle-click suppress duplicate source handling and retarget Obsidian's native new tab.
@@ -147,3 +147,4 @@ Manual QA in `callout.md`:
 - Live Preview unrendered and Source mode middle-click show a notable visual flash in the new tab in the callout fixture, briefly appearing rendered, unrendered, then rendered. This has only been observed in `callout.md` so far. Treat this as a likely code/event-order bug, not just cosmetic polish.
 - Source mode Ctrl-click acts on mouse button press rather than release in the callout fixture. Native Obsidian appears to place the cursor and highlight on release.
 - Source mode middle-click has a noticeable delay before the new tab highlights the target heading plus children. Treat this as a likely event-order or retargeting timing issue.
+- Context-menu "Open in new tab" and "Open to the right" on GFM fragment links open the target file but do not navigate to or highlight the target heading. Observed on a rendered Live Preview link; scope across modes and fixtures not yet verified.

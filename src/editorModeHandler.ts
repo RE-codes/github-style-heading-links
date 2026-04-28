@@ -33,15 +33,19 @@ export function createEditorExtension(
     class {
       // Rendered left-click: pointerdown resolves and suppresses selection;
       // pointerup navigates and clears; the following mouseup only suppresses if
-      // pointer events did not consume the click. Source links resolve on
-      // mousedown for Ctrl/Cmd-click, and middle-click lets Obsidian open the tab
-      // before we retarget it on mouseup/file-open.
+      // pointer events did not consume the click. Rendered middle-click
+      // navigates directly on mouseup and suppresses the following auxclick.
+      // Source links resolve on mousedown for Ctrl/Cmd-click, and middle-click
+      // lets Obsidian open the tab before we retarget it on mouseup/file-open.
       private pendingMiddleClick: PendingClick | null = null;
       private pendingRenderedClick: PendingClick | null = null;
       private handledRenderedPointerDown = false;
       private suppressNextRenderedClick = false;
+      private suppressNextRenderedAuxClick = false;
 
       private handlePointerDown = (event: PointerEvent) => {
+        this.suppressNextRenderedClick = false;
+        this.suppressNextRenderedAuxClick = false;
         const target = event.target;
         if (!(target instanceof Element)) {
           return;
@@ -72,6 +76,8 @@ export function createEditorExtension(
       };
 
       private handleMouseDown = (event: MouseEvent) => {
+        this.suppressNextRenderedClick = false;
+        this.suppressNextRenderedAuxClick = false;
         const target = event.target;
         if (!(target instanceof Element)) {
           return;
@@ -123,7 +129,6 @@ export function createEditorExtension(
             previousLeaf: app.workspace.activeLeaf,
             target: resolvedTarget
           };
-          retargetNativeMiddleClickTab(this.pendingMiddleClick, app, onNavigate);
         }
       };
 
@@ -137,7 +142,15 @@ export function createEditorExtension(
         const linkElement = target.closest("a, [data-href]");
         if (linkElement === null) {
           handleSourceAuxClick(target, event, this.view, resolver, sourcePath);
+          return;
         }
+
+        if (this.suppressNextRenderedAuxClick && event.button === 1) {
+          event.preventDefault();
+          event.stopPropagation();
+          event.stopImmediatePropagation();
+        }
+        this.suppressNextRenderedAuxClick = false;
       };
 
       private handleMouseUp = (event: MouseEvent) => {
@@ -148,7 +161,7 @@ export function createEditorExtension(
 
         const linkElement = target.closest("a, [data-href]");
         if (linkElement === null) {
-          handleSourceMouseUp(
+          handleUnanchoredMouseUp(
             event,
             event.button === 0 ? this.pendingRenderedClick : this.pendingMiddleClick,
             event.button === 0 ? onNavigate : undefined
@@ -162,8 +175,12 @@ export function createEditorExtension(
 
         handleRenderedAnchorMouseUp(
           event,
-          event.button === 0 ? this.pendingRenderedClick : this.pendingMiddleClick
+          event.button === 0 ? this.pendingRenderedClick : this.pendingMiddleClick,
+          event.button === 1 ? onNavigate : undefined
         );
+        if (event.button === 1 && this.pendingMiddleClick !== null) {
+          this.suppressNextRenderedAuxClick = true;
+        }
         if (event.button === 0) {
           this.pendingRenderedClick = null;
         }
@@ -176,7 +193,15 @@ export function createEditorExtension(
           return;
         }
 
-        if (handleRenderedAnchorPointerUp(event, this.pendingRenderedClick, onNavigate)) {
+        const linkElement = target.closest("a, [data-href]");
+        if (
+          handleRenderedAnchorPointerUp(
+            event,
+            linkElement,
+            this.pendingRenderedClick,
+            onNavigate
+          )
+        ) {
           this.pendingRenderedClick = null;
           this.suppressNextRenderedClick = true;
         }
@@ -414,13 +439,10 @@ export function handleSourceAuxClick(
 
 export function handleRenderedAnchorMouseUp(
   event: MouseEvent,
-  pendingClick: PendingClick | null
+  pendingClick: PendingClick | null,
+  onNavigate?: NavigateCallback
 ): void {
   if (event.button !== 0 && event.button !== 1) {
-    return;
-  }
-
-  if (event.button === 1) {
     return;
   }
 
@@ -428,6 +450,13 @@ export function handleRenderedAnchorMouseUp(
     return;
   }
 
+  if (event.button === 1 && onNavigate !== undefined) {
+    onNavigate(
+      pendingClick.target,
+      true,
+      getEditorNavigateOptions(pendingClick.target)
+    );
+  }
   event.preventDefault();
   event.stopPropagation();
   event.stopImmediatePropagation();
@@ -435,10 +464,15 @@ export function handleRenderedAnchorMouseUp(
 
 export function handleRenderedAnchorPointerUp(
   event: MouseEvent | PointerEvent,
+  linkElement: Element | null,
   pendingRenderedClick: PendingClick | null,
   onNavigate?: NavigateCallback
 ): boolean {
   if (event.button !== 0) {
+    return false;
+  }
+
+  if (linkElement === null) {
     return false;
   }
 
@@ -463,19 +497,17 @@ export function handleRenderedAnchorPointerUp(
 export function handleRenderedAnchorClick(
   event: MouseEvent,
   suppressClick: boolean
-): boolean {
+): void {
   if (!suppressClick || event.button !== 0) {
-    return false;
+    return;
   }
 
   event.preventDefault();
   event.stopPropagation();
   event.stopImmediatePropagation();
-
-  return true;
 }
 
-export function handleSourceMouseUp(
+export function handleUnanchoredMouseUp(
   event: MouseEvent,
   pendingClick: PendingClick | null,
   onNavigate?: NavigateCallback

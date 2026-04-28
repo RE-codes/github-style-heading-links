@@ -13,7 +13,7 @@ import {
   handleRenderedAnchorPointerUp,
   handleSourceAuxClick,
   handleSourceMouseDown,
-  handleSourceMouseUp,
+  handleUnanchoredMouseUp,
   handleRenderedAnchorMouseDown,
   retargetNativeMiddleClickTab
 } from "./editorModeHandler";
@@ -198,6 +198,7 @@ describe("retargetNativeMiddleClickTab", () => {
       "navigate"
     ]);
   });
+
 });
 
 describe("extractMarkdownLinkHrefAtOffset", () => {
@@ -364,11 +365,11 @@ describe("handleRenderedAnchorMouseDown", () => {
     });
   });
 
-  it("lets rendered middle-button mouseup reach Obsidian", () => {
+  it("navigates rendered middle-button mouseup directly in a new leaf", () => {
     const sourceFile = makeFile("reading.md");
     const event = new MouseEvent("mouseup", { button: 1 });
-    const navigations: unknown[] = [];
     const previousLeaf = {} as WorkspaceLeaf;
+    const navigations: unknown[] = [];
     let stoppedImmediately = false;
 
     event.stopImmediatePropagation = () => {
@@ -385,12 +386,26 @@ describe("handleRenderedAnchorMouseDown", () => {
           heading: "Target Heading",
           requiresLineFallback: false
         }
+      },
+      (target, newLeaf, options) => {
+        navigations.push({ target, newLeaf, options });
       }
     );
 
     expect({ stoppedImmediately, navigations }).toEqual({
-      stoppedImmediately: false,
-      navigations: []
+      stoppedImmediately: true,
+      navigations: [
+        {
+          target: {
+            file: sourceFile,
+            line: 4,
+            heading: "Target Heading",
+            requiresLineFallback: false
+          },
+          newLeaf: true,
+          options: { fallbackToLine: false }
+        }
+      ]
     });
   });
 
@@ -433,6 +448,7 @@ describe("handleRenderedAnchorMouseDown", () => {
 
     handleRenderedAnchorPointerUp(
       event,
+      document.createElement("a"),
       {
         previousLeaf,
         target: {
@@ -786,7 +802,7 @@ describe("handleSourceMouseDown", () => {
       stoppedImmediately = true;
     };
 
-    handleSourceMouseUp(
+    handleUnanchoredMouseUp(
       event,
       {
         previousLeaf,
@@ -816,7 +832,7 @@ describe("handleSourceMouseDown", () => {
       stoppedImmediately = true;
     };
 
-    handleSourceMouseUp(
+    handleUnanchoredMouseUp(
       event,
       {
         previousLeaf,
@@ -867,12 +883,13 @@ describe("handleSourceMouseDown", () => {
 
     const pointerUpHandled = handleRenderedAnchorPointerUp(
       pointerUp,
+      document.createElement("a"),
       pendingClick,
       (target, newLeaf, options) => {
         navigations.push({ target, newLeaf, options });
       }
     );
-    handleSourceMouseUp(
+    handleUnanchoredMouseUp(
       mouseUp,
       pointerUpHandled ? null : pendingClick,
       (target, newLeaf, options) => {
@@ -892,6 +909,36 @@ describe("handleSourceMouseDown", () => {
         options: { fallbackToLine: false }
       }
     ]);
+  });
+
+  it("does not navigate on pointerup after dragging off a rendered link", () => {
+    const sourceFile = makeFile("table.md");
+    const pointerUp = new MouseEvent("pointerup", { button: 0 });
+    const previousLeaf = {} as WorkspaceLeaf;
+    const pendingClick = {
+      previousLeaf,
+      target: {
+        file: sourceFile,
+        line: 4,
+        heading: "Table Target",
+        requiresLineFallback: false
+      }
+    };
+    const navigations: unknown[] = [];
+
+    const pointerUpHandled = handleRenderedAnchorPointerUp(
+      pointerUp,
+      null,
+      pendingClick,
+      (target, newLeaf, options) => {
+        navigations.push({ target, newLeaf, options });
+      }
+    );
+
+    expect({ pointerUpHandled, navigations }).toEqual({
+      pointerUpHandled: false,
+      navigations: []
+    });
   });
 
   it("suppresses rendered click after ctrl-pointerup navigation", () => {
@@ -917,15 +964,15 @@ describe("handleSourceMouseDown", () => {
 
     const pointerUpHandled = handleRenderedAnchorPointerUp(
       pointerUp,
+      document.createElement("a"),
       pendingClick,
       (target, newLeaf, options) => {
         navigations.push({ target, newLeaf, options });
       }
     );
-    const clickHandled = handleRenderedAnchorClick(click, pointerUpHandled);
+    handleRenderedAnchorClick(click, pointerUpHandled);
 
-    expect({ clickHandled, stoppedImmediately, navigations }).toEqual({
-      clickHandled: true,
+    expect({ stoppedImmediately, navigations }).toEqual({
       stoppedImmediately: true,
       navigations: [
         {
@@ -940,5 +987,18 @@ describe("handleSourceMouseDown", () => {
         }
       ]
     });
+  });
+
+  it("does not suppress rendered click when suppression is not armed", () => {
+    const click = new MouseEvent("click", { button: 0 });
+    let stoppedImmediately = false;
+
+    click.stopImmediatePropagation = () => {
+      stoppedImmediately = true;
+    };
+
+    handleRenderedAnchorClick(click, false);
+
+    expect(stoppedImmediately).toBe(false);
   });
 });
