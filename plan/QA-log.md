@@ -24,6 +24,15 @@ Current status after native-parity reset:
 - Source mode click, Ctrl-click, and middle-click match native behavior.
 - Middle-click highlighting has a slight but noticeable delay because the plugin retargets Obsidian's native middle-click tab after it is created; Ctrl-click uses direct plugin navigation and does not show the same latency.
 
+## Editor Event Contract
+
+- Rendered Live Preview left-click resolves a rendered anchor, prevents source/table selection, navigates once, and suppresses any later native `click` for the same gesture.
+- Rendered Live Preview Ctrl-click follows the same path, opens one new tab, and suppresses any later native `click` for the same gesture.
+- Rendered Live Preview middle-click stores the target on mousedown, navigates directly to one new tab on mouseup, and suppresses the later native `auxclick`.
+- Unrendered Live Preview and Source mode plain click only place the cursor.
+- Unrendered Live Preview and Source mode Ctrl-click navigate from the markdown source link.
+- Unrendered Live Preview and Source mode middle-click suppress duplicate source handling and retarget Obsidian's native new tab.
+
 ## Reading Mode
 
 - [x] RED: clicking `[same-file](#target-heading)` in `reading.md` should scroll to `## Target Heading`; before reading-mode handler wiring, observed no plugin-handled scroll.
@@ -33,7 +42,6 @@ Current status after native-parity reset:
 - [x] GREEN: clicking `[external](https://example.com)` in `reading.md` is not intercepted by the plugin; observed browser opens.
 - [x] GREEN: clicking `[[Wikilink]]` in `reading.md` is not intercepted by the plugin; observed native navigation to `Wikilink`.
 - [x] GREEN: clicking `#reading-test-tag` in `reading.md` is not intercepted by the plugin; observed native search with `tag:#reading-test-tag`.
-- [ ] FOLLOW-UP: hovering same-file or cross-file reading-mode links shows Obsidian's native preview popover with unresolved GFM fragment text, e.g. unable to find `"target-heading"`.
 
 ## Live Preview
 
@@ -98,15 +106,45 @@ Observed pattern:
 
 ### Encoded Paths
 
-- [ ] RED: clicking `[encoded](encoded%20path%20with%20spaces.md#h)` in `encoded path with spaces.md` should resolve the current file and scroll to `## H`.
+- [x] GREEN: clicking `[encoded](encoded%20path%20with%20spaces.md#h)` in `encoded path with spaces.md` resolves the current file and scrolls to `## H`.
 
 ### Callouts And Tables
 
-- [ ] RED: clicking `[callout link](#callout-target)` inside the callout in `callout.md` should scroll to `## Callout Target`.
-- [ ] RED: clicking `[table link](#table-target)` inside the table cell in `table.md` should scroll to `## Table Target`.
+- [x] GREEN: clicking `[callout link](#callout-target)` inside the callout in `callout.md` navigates to `## Callout Target`.
+
+Manual QA in `callout.md`:
+
+| Mode | Link state | Gesture | Native behavior | Plugin behavior | Status |
+|---|---|---|---|---|---|
+| Reading | rendered | click | Scrolls to target heading; highlights heading. | Matches native. | GREEN |
+| Reading | rendered | Ctrl-click | Opens new tab; places cursor at target heading; highlights heading plus children. | Matches native. | GREEN |
+| Reading | rendered | middle-click | Same as Ctrl-click. | Matches native. | GREEN |
+| Live Preview | rendered | click | On mousedown, shows hover preview; on mouseup, places cursor at target heading and highlights heading plus children. | Places cursor at target heading; highlights heading plus children. | GREEN |
+| Live Preview | rendered | Ctrl-click | Opens one new tab; places cursor at target heading; highlights heading plus children. | Opens one new tab; places cursor at target heading; highlights heading plus children. | GREEN |
+| Live Preview | rendered | middle-click | Same as Ctrl-click. | Matches native. | GREEN |
+| Live Preview | unrendered | click | Places cursor at click location. | Matches native. | GREEN |
+| Live Preview | unrendered | Ctrl-click | Ctrl-click on either `[text]` or `(href)` opens new tab; places cursor at target heading; highlights heading plus children. | Matches native, with a slight visual glitch. | GREEN |
+| Live Preview | unrendered | middle-click | Same as Ctrl-click. | Same as Ctrl-click. | GREEN |
+| Source mode | unrendered | click | Places cursor at click location. | Matches native. | GREEN |
+| Source mode | unrendered | Ctrl-click | Ctrl-click on either `[text]` or `(href)` places cursor at target heading; highlights heading plus children. | Matches native. | GREEN |
+| Source mode | unrendered | middle-click | Middle-click on either `[text]` or `(href)` opens new tab; places cursor at target heading; highlights heading plus children. | Matches native, with the same slight visual glitch as Live Preview unrendered. | GREEN |
+
+- [x] GREEN: clicking `[table link](#table-target)` inside the table cell in `table.md` navigates to `## Table Target`.
+  - Reading mode: matches native for click, Ctrl-click, and middle-click.
+  - Live Preview rendered: click, Ctrl-click, and middle-click navigate correctly; rendered click now blocks table-cell source selection on pointerdown and navigates on pointerup.
+  - Source mode: matches native except for the already-noted middle-click delay.
 
 ### Empty Fragments And Native Links
 
 - [ ] RED: clicking `[empty fragment](empty-fragment.md#)` in `empty-fragment.md` should open `empty-fragment.md` without scrolling.
 - [ ] RED: clicking external links in `external.md` should use native external behavior and should not be intercepted.
 - [ ] RED: clicking wikilinks or embeds in `wikilinks.md` should use native Obsidian behavior and should not be intercepted.
+
+## Follow-Up Items
+
+- Hover previews for same-file and cross-file GFM fragment links still use Obsidian's native preview path and can show unresolved fragment text, e.g. unable to find `"target-heading"`.
+- Live Preview unrendered Ctrl-click acts on mouse button press rather than release in the callout fixture. Native Obsidian appears to open the new tab on release.
+- Live Preview unrendered and Source mode middle-click show a notable visual flash in the new tab in the callout fixture, briefly appearing rendered, unrendered, then rendered. This has only been observed in `callout.md` so far. Treat this as a likely code/event-order bug, not just cosmetic polish.
+- Source mode Ctrl-click acts on mouse button press rather than release in the callout fixture. Native Obsidian appears to place the cursor and highlight on release.
+- Source mode middle-click has a noticeable delay before the new tab highlights the target heading plus children. Treat this as a likely event-order or retargeting timing issue.
+- Context-menu "Open in new tab" and "Open to the right" on GFM fragment links open the target file but do not navigate to or highlight the target heading. Observed on a rendered Live Preview link; scope across modes and fixtures not yet verified.
