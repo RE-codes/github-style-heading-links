@@ -33,8 +33,9 @@ export function createEditorExtension(
     class {
       // Rendered left-click: pointerdown resolves and suppresses selection;
       // pointerup navigates and clears; the following mouseup only suppresses if
-      // pointer events did not consume the click. Rendered middle-click
-      // navigates directly on mouseup and suppresses the following auxclick.
+      // pointer events did not consume the click. Rendered middle-click keeps
+      // mousedown native, navigates directly on mouseup, and suppresses the
+      // following auxclick that would otherwise open a second tab.
       // Source links resolve on mousedown for Ctrl/Cmd-click, and middle-click
       // lets Obsidian open the tab before we retarget it on mouseup/file-open.
       private pendingMiddleClick: PendingClick | null = null;
@@ -145,11 +146,7 @@ export function createEditorExtension(
           return;
         }
 
-        if (this.suppressNextRenderedAuxClick && event.button === 1) {
-          event.preventDefault();
-          event.stopPropagation();
-          event.stopImmediatePropagation();
-        }
+        suppressRenderedAuxClick(event, this.suppressNextRenderedAuxClick);
         this.suppressNextRenderedAuxClick = false;
       };
 
@@ -429,6 +426,19 @@ export function handleSourceAuxClick(
 
   const targetFile = resolver.resolve(parseHref(href), sourcePath);
   if (targetFile === null) {
+    return;
+  }
+
+  event.preventDefault();
+  event.stopPropagation();
+  event.stopImmediatePropagation();
+}
+
+export function suppressRenderedAuxClick(
+  event: MouseEvent,
+  suppressAuxClick: boolean
+): void {
+  if (!suppressAuxClick || event.button !== 1) {
     return;
   }
 

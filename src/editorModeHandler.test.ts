@@ -15,7 +15,8 @@ import {
   handleSourceMouseDown,
   handleUnanchoredMouseUp,
   handleRenderedAnchorMouseDown,
-  retargetNativeMiddleClickTab
+  retargetNativeMiddleClickTab,
+  suppressRenderedAuxClick
 } from "./editorModeHandler";
 import type { App } from "obsidian";
 import { makeApp, makeFile, heading } from "./resolver.test-support";
@@ -998,6 +999,32 @@ describe("handleSourceMouseDown", () => {
     };
 
     handleRenderedAnchorClick(click, false);
+
+    expect(stoppedImmediately).toBe(false);
+  });
+
+  it("suppresses rendered auxclick after handled middle-button mouseup", () => {
+    const auxClick = new MouseEvent("auxclick", { button: 1 });
+    let stoppedImmediately = false;
+
+    auxClick.stopImmediatePropagation = () => {
+      stoppedImmediately = true;
+    };
+
+    suppressRenderedAuxClick(auxClick, true);
+
+    expect(stoppedImmediately).toBe(true);
+  });
+
+  it("does not suppress rendered auxclick when suppression is not armed", () => {
+    const auxClick = new MouseEvent("auxclick", { button: 1 });
+    let stoppedImmediately = false;
+
+    auxClick.stopImmediatePropagation = () => {
+      stoppedImmediately = true;
+    };
+
+    suppressRenderedAuxClick(auxClick, false);
 
     expect(stoppedImmediately).toBe(false);
   });
