@@ -7,7 +7,6 @@ import type { WorkspaceLeaf } from "obsidian";
 import {
   createEditorExtension,
   extractMarkdownLinkHrefAtOffset,
-  handleRenderedAnchorAuxClick,
   handleRenderedAnchorClick,
   handleRenderedAnchorMouseUp,
   handleRenderedAnchorPointerDown,
@@ -365,36 +364,6 @@ describe("handleRenderedAnchorMouseDown", () => {
     });
   });
 
-  it("lets rendered auxclick reach Obsidian", () => {
-    const sourceFile = makeFile("reading.md");
-    const app = makeApp({
-      files: [sourceFile],
-      headingEntries: [[sourceFile, [heading("Target Heading", 4)]]]
-    });
-    const resolver = new LinkResolver(app as unknown as App);
-    const anchor = document.createElement("a");
-    const event = new MouseEvent("auxclick", { button: 1 });
-    const navigations: unknown[] = [];
-    let stoppedImmediately = false;
-
-    anchor.setAttribute("data-href", "#target-heading");
-    event.stopImmediatePropagation = () => {
-      stoppedImmediately = true;
-    };
-
-    handleRenderedAnchorAuxClick(
-      anchor,
-      event,
-      resolver,
-      sourceFile.path
-    );
-
-    expect({ stoppedImmediately, navigations }).toEqual({
-      stoppedImmediately: false,
-      navigations: []
-    });
-  });
-
   it("lets rendered middle-button mouseup reach Obsidian", () => {
     const sourceFile = makeFile("reading.md");
     const event = new MouseEvent("mouseup", { button: 1 });
@@ -493,29 +462,6 @@ describe("handleRenderedAnchorMouseDown", () => {
         }
       ]
     });
-  });
-
-  it("suppresses rendered click after handled mousedown", () => {
-    const sourceFile = makeFile("callout.md");
-    const event = new MouseEvent("click", { button: 0 });
-    const previousLeaf = {} as WorkspaceLeaf;
-    let stoppedImmediately = false;
-
-    event.stopImmediatePropagation = () => {
-      stoppedImmediately = true;
-    };
-
-    handleRenderedAnchorClick(event, {
-      previousLeaf,
-      target: {
-        file: sourceFile,
-        line: 4,
-        heading: "Callout Target",
-        requiresLineFallback: false
-      }
-    });
-
-    expect(stoppedImmediately).toBe(true);
   });
 
 });
@@ -897,6 +843,99 @@ describe("handleSourceMouseDown", () => {
             requiresLineFallback: false
           },
           newLeaf: false,
+          options: { fallbackToLine: false }
+        }
+      ]
+    });
+  });
+
+  it("does not navigate twice when rendered pointerup is followed by unanchored mouseup", () => {
+    const sourceFile = makeFile("table.md");
+    const pointerUp = new MouseEvent("pointerup", { button: 0 });
+    const mouseUp = new MouseEvent("mouseup", { button: 0 });
+    const previousLeaf = {} as WorkspaceLeaf;
+    const pendingClick = {
+      previousLeaf,
+      target: {
+        file: sourceFile,
+        line: 4,
+        heading: "Table Target",
+        requiresLineFallback: false
+      }
+    };
+    const navigations: unknown[] = [];
+
+    const pointerUpHandled = handleRenderedAnchorPointerUp(
+      pointerUp,
+      pendingClick,
+      (target, newLeaf, options) => {
+        navigations.push({ target, newLeaf, options });
+      }
+    );
+    handleSourceMouseUp(
+      mouseUp,
+      pointerUpHandled ? null : pendingClick,
+      (target, newLeaf, options) => {
+        navigations.push({ target, newLeaf, options });
+      }
+    );
+
+    expect(navigations).toEqual([
+      {
+        target: {
+          file: sourceFile,
+          line: 4,
+          heading: "Table Target",
+          requiresLineFallback: false
+        },
+        newLeaf: false,
+        options: { fallbackToLine: false }
+      }
+    ]);
+  });
+
+  it("suppresses rendered click after ctrl-pointerup navigation", () => {
+    const sourceFile = makeFile("callout.md");
+    const pointerUp = new MouseEvent("pointerup", { button: 0, ctrlKey: true });
+    const click = new MouseEvent("click", { button: 0, ctrlKey: true });
+    const previousLeaf = {} as WorkspaceLeaf;
+    const pendingClick = {
+      previousLeaf,
+      target: {
+        file: sourceFile,
+        line: 4,
+        heading: "Callout Target",
+        requiresLineFallback: false
+      }
+    };
+    const navigations: unknown[] = [];
+    let stoppedImmediately = false;
+
+    click.stopImmediatePropagation = () => {
+      stoppedImmediately = true;
+    };
+
+    const pointerUpHandled = handleRenderedAnchorPointerUp(
+      pointerUp,
+      pendingClick,
+      (target, newLeaf, options) => {
+        navigations.push({ target, newLeaf, options });
+      }
+    );
+    const clickHandled = handleRenderedAnchorClick(click, pointerUpHandled);
+
+    expect({ clickHandled, stoppedImmediately, navigations }).toEqual({
+      clickHandled: true,
+      stoppedImmediately: true,
+      navigations: [
+        {
+          target: {
+            file: sourceFile,
+            line: 4,
+            heading: "Callout Target",
+            requiresLineFallback: false
+          },
+          newLeaf: true,
           options: { fallbackToLine: false }
         }
       ]

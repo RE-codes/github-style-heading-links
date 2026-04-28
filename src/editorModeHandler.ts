@@ -31,9 +31,15 @@ export function createEditorExtension(
 ): Extension {
   return ViewPlugin.fromClass(
     class {
+      // Rendered left-click: pointerdown resolves and suppresses selection;
+      // pointerup navigates and clears; the following mouseup only suppresses if
+      // pointer events did not consume the click. Source links resolve on
+      // mousedown for Ctrl/Cmd-click, and middle-click lets Obsidian open the tab
+      // before we retarget it on mouseup/file-open.
       private pendingMiddleClick: PendingClick | null = null;
       private pendingRenderedClick: PendingClick | null = null;
       private handledRenderedPointerDown = false;
+      private suppressNextRenderedClick = false;
 
       private handlePointerDown = (event: PointerEvent) => {
         const target = event.target;
@@ -131,10 +137,7 @@ export function createEditorExtension(
         const linkElement = target.closest("a, [data-href]");
         if (linkElement === null) {
           handleSourceAuxClick(target, event, this.view, resolver, sourcePath);
-          return;
         }
-
-        handleRenderedAnchorAuxClick(linkElement, event, resolver, sourcePath);
       };
 
       private handleMouseUp = (event: MouseEvent) => {
@@ -173,7 +176,10 @@ export function createEditorExtension(
           return;
         }
 
-        handleRenderedAnchorPointerUp(event, this.pendingRenderedClick, onNavigate);
+        if (handleRenderedAnchorPointerUp(event, this.pendingRenderedClick, onNavigate)) {
+          this.pendingRenderedClick = null;
+          this.suppressNextRenderedClick = true;
+        }
       };
 
       private handleClick = (event: MouseEvent) => {
@@ -187,8 +193,11 @@ export function createEditorExtension(
           return;
         }
 
-        handleRenderedAnchorClick(event, this.pendingRenderedClick);
-        this.pendingRenderedClick = null;
+        handleRenderedAnchorClick(
+          event,
+          this.suppressNextRenderedClick
+        );
+        this.suppressNextRenderedClick = false;
       };
 
       constructor(private view: EditorView) {
@@ -378,23 +387,6 @@ function getEditorNavigateOptions(target: ResolvedTarget): NavigateOptions {
   return target.requiresLineFallback ? {} : { fallbackToLine: false };
 }
 
-export function handleRenderedAnchorAuxClick(
-  anchor: Element,
-  event: MouseEvent,
-  resolver: LinkResolver,
-  sourcePath: string
-): void {
-  const action = decideAction(anchor);
-  if (action.kind === "ignore") {
-    return;
-  }
-
-  const target = resolver.resolve(parseHref(action.href), sourcePath);
-  if (target === null) {
-    return;
-  }
-}
-
 export function handleSourceAuxClick(
   target: Element,
   event: MouseEvent,
@@ -428,11 +420,11 @@ export function handleRenderedAnchorMouseUp(
     return;
   }
 
-  if (pendingClick === null) {
+  if (event.button === 1) {
     return;
   }
 
-  if (event.button === 1) {
+  if (pendingClick === null) {
     return;
   }
 
@@ -445,13 +437,13 @@ export function handleRenderedAnchorPointerUp(
   event: MouseEvent | PointerEvent,
   pendingRenderedClick: PendingClick | null,
   onNavigate?: NavigateCallback
-): void {
+): boolean {
   if (event.button !== 0) {
-    return;
+    return false;
   }
 
   if (pendingRenderedClick === null) {
-    return;
+    return false;
   }
 
   if (onNavigate !== undefined) {
@@ -464,43 +456,43 @@ export function handleRenderedAnchorPointerUp(
   event.preventDefault();
   event.stopPropagation();
   event.stopImmediatePropagation();
+
+  return true;
 }
 
 export function handleRenderedAnchorClick(
   event: MouseEvent,
-  pendingRenderedClick: PendingClick | null
-): void {
-  if (event.button !== 0) {
-    return;
-  }
-
-  if (pendingRenderedClick === null) {
-    return;
+  suppressClick: boolean
+): boolean {
+  if (!suppressClick || event.button !== 0) {
+    return false;
   }
 
   event.preventDefault();
   event.stopPropagation();
   event.stopImmediatePropagation();
+
+  return true;
 }
 
 export function handleSourceMouseUp(
   event: MouseEvent,
-  pendingMiddleClick: PendingClick | null,
+  pendingClick: PendingClick | null,
   onNavigate?: NavigateCallback
 ): void {
   if (event.button !== 0 && event.button !== 1) {
     return;
   }
 
-  if (pendingMiddleClick === null) {
+  if (pendingClick === null) {
     return;
   }
 
   if (event.button === 0 && onNavigate !== undefined) {
     onNavigate(
-      pendingMiddleClick.target,
+      pendingClick.target,
       event.ctrlKey || event.metaKey,
-      getEditorNavigateOptions(pendingMiddleClick.target)
+      getEditorNavigateOptions(pendingClick.target)
     );
   }
   event.preventDefault();

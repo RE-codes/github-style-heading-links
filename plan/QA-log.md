@@ -24,6 +24,15 @@ Current status after native-parity reset:
 - Source mode click, Ctrl-click, and middle-click match native behavior.
 - Middle-click highlighting has a slight but noticeable delay because the plugin retargets Obsidian's native middle-click tab after it is created; Ctrl-click uses direct plugin navigation and does not show the same latency.
 
+## Editor Event Contract
+
+- Rendered Live Preview left-click resolves a rendered anchor, prevents source/table selection, navigates once, and suppresses any later native `click` for the same gesture.
+- Rendered Live Preview Ctrl-click follows the same path, opens one new tab, and suppresses any later native `click` for the same gesture.
+- Rendered Live Preview middle-click lets Obsidian create the new tab, then retargets that tab after native open events.
+- Unrendered Live Preview and Source mode plain click only place the cursor.
+- Unrendered Live Preview and Source mode Ctrl-click navigate from the markdown source link.
+- Unrendered Live Preview and Source mode middle-click suppress duplicate source handling and retarget Obsidian's native new tab.
+
 ## Reading Mode
 
 - [x] RED: clicking `[same-file](#target-heading)` in `reading.md` should scroll to `## Target Heading`; before reading-mode handler wiring, observed no plugin-handled scroll.
@@ -110,8 +119,8 @@ Manual QA in `callout.md`:
 | Reading | rendered | click | Scrolls to target heading; highlights heading. | Matches native. | GREEN |
 | Reading | rendered | Ctrl-click | Opens new tab; places cursor at target heading; highlights heading plus children. | Matches native. | GREEN |
 | Reading | rendered | middle-click | Same as Ctrl-click. | Matches native. | GREEN |
-| Live Preview | rendered | click | On mousedown, shows hover preview; on mouseup, places cursor at target heading and highlights heading plus children. | Places cursor at target heading and highlights heading plus children; known difference: navigation happens on mousedown, so native hover-preview timing is not matched. | GREEN |
-| Live Preview | rendered | Ctrl-click | Opens new tab; places cursor at target heading; highlights heading plus children. | Matches native. | GREEN |
+| Live Preview | rendered | click | On mousedown, shows hover preview; on mouseup, places cursor at target heading and highlights heading plus children. | Places cursor at target heading; highlights heading plus children. | GREEN |
+| Live Preview | rendered | Ctrl-click | Opens one new tab; places cursor at target heading; highlights heading plus children. | Opens one new tab; places cursor at target heading; highlights heading plus children. | GREEN |
 | Live Preview | rendered | middle-click | Same as Ctrl-click. | Matches native. | GREEN |
 | Live Preview | unrendered | click | Places cursor at click location. | Matches native. | GREEN |
 | Live Preview | unrendered | Ctrl-click | Ctrl-click on either `[text]` or `(href)` opens new tab; places cursor at target heading; highlights heading plus children. | Matches native, with a slight visual glitch. | GREEN |
@@ -134,6 +143,7 @@ Manual QA in `callout.md`:
 ## Follow-Up Items
 
 - Hover previews for same-file and cross-file GFM fragment links still use Obsidian's native preview path and can show unresolved fragment text, e.g. unable to find `"target-heading"`.
+- Live Preview unrendered Ctrl-click acts on mouse button press rather than release in the callout fixture. Native Obsidian appears to open the new tab on release.
 - Live Preview unrendered and Source mode middle-click show a notable visual flash in the new tab in the callout fixture, briefly appearing rendered, unrendered, then rendered. This has only been observed in `callout.md` so far. Treat this as a likely code/event-order bug, not just cosmetic polish.
+- Source mode Ctrl-click acts on mouse button press rather than release in the callout fixture. Native Obsidian appears to place the cursor and highlight on release.
 - Source mode middle-click has a noticeable delay before the new tab highlights the target heading plus children. Treat this as a likely event-order or retargeting timing issue.
-- Live Preview rendered click has a known timing difference from native behavior: plugin navigation happens through pointerdown/pointerup handling to avoid table-cell source selection, so native hover-preview timing is not matched exactly.
