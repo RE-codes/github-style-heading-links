@@ -1,0 +1,237 @@
+# Observed Behavior Matrix
+
+Date: 2026-04-28
+
+## Purpose
+
+This document consolidates the native-parity observations that were previously spread through `plan/QA-log.md` and commit history. Use it as the singular reference for expected behavior while designing `modePolicy.ts`, gesture state, and the editor-mode overhaul.
+
+This is not a replacement for `plan/native-event-investigation.md`. This matrix records what has been observed at the user-behavior level. It does not prove which DOM event or workspace event drives native behavior.
+
+## Legend
+
+- **Native target**: Intended native Obsidian behavior recorded in QA.
+- **Plugin observed**: Current plugin behavior recorded in QA.
+- **MVP accepted**: Behavior differs from ideal native parity but is accepted for personal MVP.
+- **Unknown**: Not fully verified in the QA log.
+- **Public blocker**: Must be solved or documented before community/public release.
+- **P1**: Highest priority MVP coverage.
+- **P2**: MVP coverage, after P1.
+- **P3**: Public-release readiness coverage.
+- **P4**: Lowest priority public-release readiness or documentation coverage.
+
+P1 and P2 items are considered MVP scope. P3 and P4 items are considered public-release readiness scope.
+
+This matrix extends the original MVP plan. MVP completion means the remaining `plan/gfm-fragment-links-plan.md` gaps plus the P1/P2 rows here are complete, explicitly MVP accepted, or explicitly deferred with rationale. P3/P4 rows should be reevaluated after the native event investigation and editor refactor.
+
+## Priority Taxonomy
+
+P1 items protect the plugin's core promise and native non-disruption:
+
+- Same-file and cross-file GFM fragments.
+- File-only links.
+- Missing file and missing heading behavior.
+- Empty fragments.
+- Encoded spaces in paths.
+- Duplicate headings.
+- Basic formatted headings already covered by current slug tests and QA.
+- External links, wikilinks, embeds, and tags must remain native.
+- Core containers already encountered in real QA: normal paragraphs, callouts, and tables.
+
+P2 items cover common legal Markdown/GFM forms that are likely to appear in ordinary documents and can affect MVP correctness:
+
+- Inline links with titles.
+- Angle-bracket link destinations, especially paths with spaces.
+- Balanced and escaped parentheses in link destinations.
+- Percent-encoded `#` in filenames and percent-encoded fragments.
+- Link text with escaped brackets or matched nested brackets.
+- ATX headings with closing hashes.
+- Setext headings.
+- Headings with square brackets, parentheses, escaped punctuation, links, images, HTML/entities, strikethrough, non-ASCII text, and emoji.
+- Links inside lists, task lists, and blockquotes.
+
+P3 items are public-release readiness:
+
+- Reference, collapsed-reference, and shortcut-reference links.
+- Raw HTML anchors.
+- Full legal Markdown source-link parsing beyond the P2 inline-link subset, including multiline whitespace/title forms.
+- Context-menu support.
+- Hover preview support.
+- Split-pane source-path correctness.
+- Mobile behavior.
+
+P4 items are lower-priority public-release polish or documentation:
+
+- GFM extended autolinks and bare URL behavior beyond "do not intercept external links."
+- GitHub issue/PR autolinks.
+- Footnote-like or plugin-specific syntax if encountered.
+- Punctuation-only or formatting-only headings.
+- Exotic malformed Markdown behavior, unless Obsidian treats it as a navigable link.
+
+## Core Gesture Matrix
+
+| Mode | Surface | Gesture | Native target | Plugin observed | Status | Notes |
+|---|---|---|---|---|---|---|
+| Reading | Rendered link | Plain click | Navigate internally and highlight heading. | Matches native. | GREEN | Verified in `reading.md`, `duplicates.md`, `callout.md`, `table.md`. |
+| Reading | Rendered link | Ctrl/Cmd-click | Open new tab in Live Preview and highlight heading with children. | Matches native for first heading; duplicate fallback highlights heading only for `#foo-1` and `#foo-2`. | MVP accepted | Duplicate child highlighting is public-release follow-up. |
+| Reading | Rendered link | Middle-click | Same as Ctrl/Cmd-click. | Matches native for first heading; duplicate fallback highlights heading only for `#foo-1` and `#foo-2`. | MVP accepted | Duplicate child highlighting is public-release follow-up. |
+| Live Preview | Rendered link | Plain click | Navigate internally and highlight heading with children. | Matches native. | GREEN | In callout QA, native shows hover preview on mousedown and navigates/highlights on mouseup. |
+| Live Preview | Rendered link | Ctrl/Cmd-click | Open one new tab and highlight heading with children. | Matches native for first heading; duplicate fallback highlights heading only for `#foo-1` and `#foo-2`. | MVP accepted | Rendered Ctrl-click suppresses later native click. |
+| Live Preview | Rendered link | Middle-click | Same as Ctrl/Cmd-click. | Matches native for first heading; duplicate fallback highlights heading only for `#foo-1` and `#foo-2`. | MVP accepted | Rendered middle-click stores target on mousedown, navigates on mouseup, suppresses later auxclick. |
+| Live Preview | Source text | Plain click | Place cursor only. | Matches native. | GREEN | Verified in duplicate and callout QA. |
+| Live Preview | Source text | Ctrl/Cmd-click | Open new tab, navigate to target heading, highlight heading plus children. | Matches native, with slight visual glitch in callout fixture. | GREEN with public blocker | Plugin acts on mouse button press; native appears to open on release. |
+| Live Preview | Source text | Middle-click | Open new tab, navigate to target heading, highlight heading plus children. | Matches native, with slight visual glitch in callout fixture. | GREEN with public blocker | Current path retargets native new tab. |
+| Source mode | Source text | Plain click | Place cursor only. | Matches native. | GREEN | Verified in duplicate and callout QA. |
+| Source mode | Source text | Ctrl/Cmd-click | Navigate in same tab and highlight heading plus children. | Matches native for first heading; duplicate fallback highlights heading only for `#foo-1` and `#foo-2`. | MVP accepted | Plugin acts on mouse button press; native appears to complete on release. |
+| Source mode | Source text | Middle-click | Open new tab in Live Preview and highlight heading plus children. | Matches native for first heading; duplicate fallback highlights heading only for `#foo-1` and `#foo-2`; noticeable delay. | MVP accepted with public blocker | Middle-click delay and visual flash need investigation. |
+
+## Link Type Matrix
+
+| Priority | Link type | Modes verified | Expected behavior | Observed behavior | Status | Notes |
+|---|---|---|---|---|---|---|
+| P1 | Same-file GFM fragment, e.g. `[x](#target-heading)` | Reading, Live Preview, Source | Navigate to matching GFM slug heading. | Works in recorded QA. | GREEN | Source mode verified for Ctrl-click and middle-click. |
+| P1 | Cross-file GFM fragment, e.g. `[x](Other.md#target-heading)` | Reading, Live Preview | Open target file and navigate to matching heading. | Works in recorded QA. | GREEN | Source mode cross-file not comprehensively logged. |
+| P1 | File-only link, e.g. `[x](Other.md)` | Planned matrix | Native file open. | Not consolidated in QA log. | Unknown | Should be included in final QA matrix. |
+| P1 | Missing file | Planned matrix | Native miss behavior. | Not consolidated in QA log. | Unknown | Important non-disruption check. |
+| P1 | Existing file, missing heading | Planned matrix | Open file, no scroll. | Not consolidated in QA log. | Unknown | Resolver supports this; manual QA status unclear. |
+| P1 | Empty fragment, e.g. `[x](file.md#)` | Fixture exists | Open file without scrolling. | QA row remains unchecked RED. | Unknown | Must close before MVP completion or defer explicitly. |
+| P1 | External schemes: `http`, `https`, `mailto`, `tel`, `obsidian`, `file`, protocol-relative `//example.com` | Reading, Live Preview for `https` | Native external behavior; plugin must not intercept. | Reading and Live Preview observed native behavior for `https`. Dedicated `external.md` row remains unchecked. | Partial | Expand fixture to all listed schemes. |
+| P1 | Wikilinks and embeds, e.g. `[[Note]]`, `[[Note#Heading]]`, `![[Note]]`, `![[image.png]]` | Reading, Live Preview for wikilink | Native Obsidian behavior; plugin must not intercept. | Reading and Live Preview observed native wikilink navigation. Dedicated `wikilinks.md` row remains unchecked. | Partial | Embeds need explicit verification. |
+| P1 | Tag link, e.g. `#reading-test-tag` | Reading, Live Preview | Native tag behavior. | Observed native tag behavior. | GREEN | Source mode tag behavior not relevant to markdown link handler. |
+| P1 | Encoded path, e.g. `[x](encoded%20path%20with%20spaces.md#h)` | Current file QA | Decode path and navigate to heading. | Works. | GREEN | Recorded in `encoded path with spaces.md`. |
+| P2 | Inline link with title, e.g. `[x](Other.md#h "title")` | Not verified | Extract destination only and ignore title. | Current source regex likely mishandles this. | Unknown | Legal Markdown; needs source parser coverage. |
+| P2 | Angle-bracket destination, e.g. `[x](<Other File.md#h>)` | Not verified | Extract destination inside `<...>`, support spaces. | Not verified. | Unknown | CommonMark allows spaces only in angle-bracket destinations. |
+| P2 | Balanced parentheses in destination, e.g. `[x](Other(foo).md#h)` | Not verified | Extract full destination. | Current source regex likely truncates. | Unknown | Legal Markdown when parentheses are balanced. |
+| P2 | Escaped parentheses in destination, e.g. `[x](Other\(foo\).md#h)` | Not verified | Extract unescaped destination. | Not verified. | Unknown | Legal Markdown. |
+| P2 | Percent-encoded `#` in filename, e.g. `[x](File%23Name.md#h)` | Not verified | Decode filename `#` without treating it as fragment delimiter. | Not verified. | Unknown | Parser currently splits before decoding, which is promising but unverified. |
+| P2 | Percent-encoded fragment, e.g. `[x](Other.md#caf%C3%A9)` | Not verified | Decode fragment and match slug as appropriate. | Not verified. | Unknown | Needs fixture with non-ASCII heading/fragment. |
+| P2 | Link text with escaped brackets, e.g. `[a \[b\]](#h)` | Not verified | Source detector should still identify href. | Current source regex likely fails or is fragile. | Unknown | Legal Markdown. |
+| P2 | Link text with matched nested brackets, e.g. `[a [b]](#h)` | Not verified | Source detector should identify href. | Current source regex likely fails. | Unknown | Legal Markdown link text may contain matched bracket pairs. |
+
+## Heading Target Matrix
+
+| Priority | Heading case | Expected behavior | Observed behavior | Status | Notes |
+|---|---|---|---|---|---|
+| P1 | Plain heading | Navigate and highlight. | Works across core QA. | GREEN | Baseline case. |
+| P1 | Formatted bold heading | Slug strips formatting and navigates. | Works for `## **Bold Heading**`. | GREEN | Verified in `headings-formatted.md`. |
+| P1 | Formatted italic heading | Slug strips formatting and navigates. | Works for `## *Italic Heading*`. | GREEN | Verified in `headings-formatted.md`. |
+| P1 | Code-formatted heading | Slug strips formatting and navigates. | Works for ``## `code()` Heading``. | GREEN | Verified in `headings-formatted.md`. |
+| P1 | Duplicate heading first occurrence | `#foo` lands on first heading. | Works and highlights heading plus children where native path is available. | GREEN | Verified in `duplicates.md`. |
+| P1 | Duplicate heading second occurrence | `#foo-1` lands on second heading. | Works; often highlights heading only due to line fallback. | MVP accepted | Public-release follow-up. |
+| P1 | Duplicate heading third occurrence | `#foo-2` lands on third heading. | Works; often highlights heading only due to line fallback. | MVP accepted | Public-release follow-up. |
+| P2 | ATX heading with closing hashes, e.g. `## Heading ##` | Slug should be based on heading text, not closing marker. | Not explicitly verified. | Unknown | Obsidian metadata may normalize this; verify. |
+| P2 | Setext heading | Slug should match heading text. | Not explicitly verified. | Unknown | Verify metadata heading cache behavior. |
+| P2 | Heading with square brackets, e.g. `## API [v2]` | Match GFM slug for bracketed text. | Not verified. | Unknown | Important because punctuation stripping affects slug. |
+| P2 | Heading with parentheses, e.g. `## Function foo(bar)` | Match GFM slug. | Not verified. | Unknown | Common in technical docs. |
+| P2 | Heading with escaped punctuation, e.g. `## Foo \[bar\]` | Match rendered/GFM heading text. | Not verified. | Unknown | Needs slug parity check. |
+| P2 | Heading with link, e.g. `## See [docs](url)` | Slug uses link text. | Slug unit coverage exists for link stripping; manual QA not explicit. | Partial | Add fixture row. |
+| P2 | Heading with image, e.g. `## ![alt](img.png) Title` | Slug should ignore or handle image consistently with GitHub. | Slug unit coverage exists for image stripping; manual QA not explicit. | Partial | Add fixture row. |
+| P2 | Heading with HTML/entities, e.g. `## Fish &amp; Chips`, `## <code>x</code>` | Match GFM/Obsidian rendered heading text. | HTML tag stripping unit coverage exists; entities not explicit. | Partial | Add fixture row. |
+| P2 | Heading with strikethrough, e.g. `## ~~Old~~ New` | Match GFM slug. | Not verified. | Unknown | GFM extension. |
+| P2 | Heading with non-ASCII/accented text, e.g. `## Café` | Match GFM slug and URL-decoded fragment. | Not verified. | Unknown | Pair with percent-encoded fragment test. |
+| P2 | Heading with emoji | Match GFM slug behavior. | Slug unit coverage exists for emoji. | Partial | Manual QA not explicit. |
+
+## Container And Layout Matrix
+
+| Priority | Container/layout | Modes verified | Expected behavior | Observed behavior | Status | Notes |
+|---|---|---|---|---|---|---|
+| P1 | Normal paragraph link | Reading, Live Preview, Source | Match native behavior by mode and gesture. | Works in recorded QA. | GREEN | Baseline path. |
+| P1 | Callout link | Reading, Live Preview rendered/source text, Source | Match native behavior by mode and gesture. | Works, with visual glitch on Live Preview unrendered and Source middle-click. | GREEN with public blocker | Good regression fixture for event order. |
+| P1 | Table cell link | Reading, Live Preview rendered, Source | Match native behavior and avoid table-cell source selection. | Works; rendered click blocks table-cell source selection on pointerdown and navigates on pointerup. | GREEN | Strong evidence raw capture may have been needed, pending tracer. |
+| P2 | List item link | Not verified | Match native behavior by mode and gesture. | Not verified. | Unknown | Common document structure. |
+| P2 | Task list item link | Not verified | Match native behavior by mode and gesture without toggling checkbox accidentally. | Not verified. | Unknown | GFM extension. |
+| P2 | Blockquote link | Not verified | Match native behavior by mode and gesture. | Not verified. | Unknown | Similar to callouts but should be explicit. |
+| P3 | Split panes | Not verified | Clicked editor should resolve source path from clicked file, not necessarily active file. | Not verified. | Public blocker | Investigation should compare `editorInfoField.file`, `workspace.getActiveFile()`, and active editor state. |
+
+## P3 Public-Release Readiness Items
+
+These are not MVP scope under the current priority split, but should be handled before a community/public release or documented as limitations.
+
+| Area | Item | Why it matters |
+|---|---|---|
+| Source parser | Reference links: `[x][ref]` with `[ref]: Other.md#h` | Legal Markdown and common in longer documents. |
+| Source parser | Collapsed reference links: `[x][]` | Legal Markdown. |
+| Source parser | Shortcut reference links: `[x]` | Legal Markdown, but harder to distinguish from ordinary bracketed text without parser support. |
+| Source parser | Multiline whitespace/title forms allowed by Markdown | Legal Markdown; current line-based detector is insufficient. |
+| Rendered/native integration | Raw HTML anchors: `<a href="#h">x</a>` | May appear in GitHub-authored docs; Reading/Live Preview rendered paths may already see anchors, Source mode needs investigation. |
+| Native integration | Context menu "Open in new tab/right" | Known public blocker. |
+| Native integration | Hover preview | Known public blocker. |
+| Workspace | Split panes | Deferred to public release; likely solved by editor-local context. |
+| Platform | Mobile behavior | Unknown because manifest currently sets `isDesktopOnly: false`. |
+
+## P4 Lower-Priority Readiness Items
+
+These should not block MVP and probably should not block an initial public release unless users report them or implementation is cheap.
+
+| Area | Item | Why lower priority |
+|---|---|---|
+| Autolinks | GFM extended autolinks and bare URLs | Plugin should usually ignore as external/native; not central to heading fragments. |
+| GitHub-specific autolinks | Issue/PR references like `#123`, `owner/repo#123` | GitHub UI feature, not generally meaningful in Obsidian vault navigation. |
+| Plugin-specific syntax | Footnote-like or third-party plugin link syntax | Out of scope until encountered. |
+| Edge heading content | Punctuation-only or formatting-only headings | Rare and can be documented unless real docs need it. |
+| Malformed Markdown | Exotic malformed link syntax | Match Obsidian/native behavior where practical, but do not design around invalid input first. |
+
+## Event Timing And Suppression Matrix
+
+This section captures observed/inferred event contracts. It is lower-confidence than the behavior matrices above.
+
+| Surface | Gesture | Current plugin contract | Native observation from QA | Confidence | Follow-up |
+|---|---|---|---|---|---|
+| Live Preview rendered | Plain click | Resolve rendered anchor on pointerdown, suppress source/table selection, navigate on pointerup, suppress later click. | Callout QA says native shows hover preview on mousedown and navigates/highlights on mouseup. | Medium | Confirm with event tracer. |
+| Live Preview rendered | Ctrl/Cmd-click | Same rendered path, open one new tab, suppress later native click. | Native opens one new tab and highlights. | Medium | Confirm exact driver event. |
+| Live Preview rendered | Middle-click | Store target on mousedown, navigate on mouseup, suppress later auxclick. | Native same as Ctrl-click. | Medium | Confirm auxclick order. |
+| Live Preview source text | Plain click | Do not navigate; allow cursor placement. | Native places cursor. | High | Preserve. |
+| Live Preview source text | Ctrl/Cmd-click | Navigate from markdown source link. | Native appears to open on release; plugin currently acts on press. | Medium | Public-release blocker. |
+| Live Preview source text | Middle-click | Suppress duplicate source handling and retarget native new tab. | Native opens new tab; plugin has visual flash in callout. | Medium | Public-release blocker. |
+| Source mode source text | Plain click | Do not navigate; allow cursor placement. | Native places cursor. | High | Preserve. |
+| Source mode source text | Ctrl/Cmd-click | Navigate from markdown source link in same tab. | Native appears to complete on release; plugin acts on press. | Medium | Public-release blocker. |
+| Source mode source text | Middle-click | Retarget native new tab after it is created. | Native opens Live Preview tab; plugin has delay/flash. | Medium | Public-release blocker. |
+
+## Context Menu And Hover Matrix
+
+| Feature | Observed behavior | Status | Notes |
+|---|---|---|---|
+| Hover preview for same-file/cross-file GFM fragments | Native preview path can show unresolved fragment text, e.g. unable to find `"target-heading"`. | Public blocker | May require separate preview hook or documented limitation. |
+| Context menu "Open in new tab" | On rendered Live Preview GFM fragment links, opens target file but does not navigate/highlight target heading. | Public blocker | Scope across modes and fixtures not yet verified. |
+| Context menu "Open to the right" | Same known issue as open in new tab for rendered Live Preview link. | Public blocker | Needs native event investigation. |
+
+## MVP Completion Gaps
+
+The following rows are not complete enough to rely on:
+
+1. Empty fragment behavior across modes.
+2. Dedicated external link fixture across modes.
+3. Dedicated wikilink/embed fixture across modes.
+4. Source-mode cross-file GFM fragment behavior.
+5. File-only link behavior.
+6. Missing file and missing heading behavior.
+7. P2 legal inline-link forms in Source mode.
+8. P2 heading target styles.
+9. P2 list/task-list/blockquote containers.
+
+## Public-Release Readiness Gaps
+
+The following rows are intentionally outside MVP scope but should be revisited after the native event investigation and editor refactor:
+
+1. Split-pane source-path correctness.
+2. Context menu behavior outside the one rendered Live Preview observation.
+3. Hover preview behavior across all modes/surfaces.
+4. Mobile behavior.
+5. P3/P4 source-link parsing and syntax edge cases.
+
+## How To Use This Matrix
+
+Use this document to seed:
+
+- `modePolicy.ts` expected behavior.
+- Gesture characterization tests.
+- Manual QA checklists.
+- Public-release blocker tracking.
+
+Use `plan/native-event-investigation.md` to fill in:
+
+- Exact event driver.
+- Event phase.
+- Workspace event order.
+- Supported source-path and leaf APIs.
+- Feasibility of context menu and hover preview support.
