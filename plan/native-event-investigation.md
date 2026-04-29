@@ -116,6 +116,16 @@ src/investigation/
 
 Register a temporary editor extension and optional reading-mode listeners. The tracer should not call `preventDefault()`, `stopPropagation()`, or `stopImmediatePropagation()`.
 
+For clean native timing, attach DOM listeners at `window` in capture phase where possible, and use `{ passive: true }` for event types that allow it. Avoid synchronous DOM reads beyond the compact fields listed below.
+
+Run traces in a clean signal environment:
+
+- Minimum reproduction vault.
+- Default theme.
+- No other community plugins enabled.
+- Devtools closed during gesture capture and opened only after capture for log inspection.
+- Same Obsidian version recorded for every run.
+
 Trace these DOM events in capture and bubble phases:
 
 - `pointerdown`
@@ -140,6 +150,8 @@ Trace timing:
 
 - Use `performance.now()` for event ordering.
 - Assign a gesture id on `pointerdown`/`mousedown` and carry it through follow-up events when possible.
+- Capture at least three samples for timing-sensitive rows, especially middle-click and press-vs-release gestures.
+- Treat sub-millisecond differences as concurrent unless event order is stable across samples.
 
 ## Data To Log Per DOM Event
 
@@ -207,11 +219,11 @@ Log:
 
 2. Disable plugin navigation behavior.
 
-   For the cleanest native trace, run with the GFM navigation handlers disabled and only the tracer active. If that is too invasive, add a tracer-only build flag.
+   For the cleanest native trace, run with the GFM navigation handlers disabled and only the tracer active. The direct options are: comment out `registerEditorExtension(...)` and `registerMarkdownPostProcessor(...)` in `main.ts` on the temporary branch, or add a local-only `TRACER_ONLY` flag that registers the tracer and skips production handlers.
 
 3. Confirm tracer is passive.
 
-   Verify every traced listener returns without preventing default or stopping propagation.
+   Verify every traced listener returns without preventing default or stopping propagation. Confirm passive listeners do not produce browser warnings.
 
 4. Record baseline native Obsidian links.
 
@@ -233,13 +245,15 @@ Log:
 
    Open two panes with different files. Click a link in the non-active pane and compare `editorInfoField.file`, `workspace.getActiveFile()`, `workspace.activeEditor?.file`, and leaf information.
 
+   Decision rule: if `editorInfoField.file` equals the file in the pane that received the click, source-path correctness is solved by switching editor-mode source lookup to that field. If it does not, continue testing `activeEditor`, leaf view state, and DOM-to-view context.
+
 9. Run context-menu tests.
 
    Right-click rendered and source-text links. Select native "Open in new tab" and "Open to the right" where available. Record whether `editor-menu` exposes the editor and file context, and whether DOM/context state exposes the href.
 
 10. Run hover preview tests.
 
-   Hover native links and GFM links in Reading mode, Live Preview rendered links, and Live Preview source text. Record which events fire and whether any accessible hover parent or popover context includes the href.
+   Hover native links and GFM links in Reading mode, Live Preview rendered links, and Live Preview source text. Record which events fire and whether any accessible hover parent or popover context includes the href. Also instrument likely API targets if exposed: workspace `hover-link` events, `MarkdownView.previewMode`, and Component-based hover popover registration paths.
 
 11. Summarize event sequences.
 
@@ -272,33 +286,30 @@ Log:
 
 ## Decisions To Make From Results
 
-1. Source path:
-   Use `editorInfoField.file` if it tracks the clicked editor in split panes.
-
-2. Leaf context:
-   Replace direct `workspace.activeLeaf` if `getMostRecentLeaf()`, `activeEditor`, or another supported path preserves middle-click behavior.
-
-3. Event driver:
-   Use CodeMirror `eventHandlers` where returning `true` can match native behavior. Keep raw capture only for paths that demonstrably require earlier interception.
-
-4. Context menu:
-   If `editor-menu` plus last hovered/clicked link context can identify href and file, implement context-menu support through workspace/editor menu integration instead of click-event workarounds.
-
-5. Hover preview:
-   If hover preview uses accessible link metadata, implement a preview rewrite path. If it uses an internal-only native path, document limitation or investigate a separate supported hook.
-
-6. Middle-click:
-   If native opens the new leaf before a reliable workspace event, retarget based on the measured event sequence. If not, replace the timeout workaround.
-
-7. Mode policy:
-   Use the measured event table to define `modePolicy.ts`; do not encode mode differences ad hoc in event handlers.
+| Decision area | Observation | Policy |
+|---|---|---|
+| Source path | `editorInfoField.file` tracks the clicked editor, including split panes. | Use `editorInfoField.file` for editor-mode source-path lookup. |
+| Source path | `editorInfoField.file` does not track the clicked editor. | Keep investigating editor-local context; do not rely on `workspace.getActiveFile()` for public release. |
+| Leaf context | `getMostRecentLeaf()`, `activeEditor`, or another supported API preserves middle-click behavior. | Replace direct `workspace.activeLeaf` usage. |
+| Leaf context | No supported API preserves middle-click behavior. | Isolate deprecated `workspace.activeLeaf` access in one helper with tests and a comment explaining the Obsidian limitation. |
+| Event driver | CodeMirror `eventHandlers` or `domEventHandlers()` can match native behavior and suppression. | Prefer the documented CodeMirror handler for that path. |
+| Event driver | Native parity requires earlier capture, such as table/callout rendered-link suppression. | Keep raw capture for that path and document why. |
+| Context menu | `editor-menu` plus last hovered/clicked link context identifies href and source file. | Implement context-menu support through workspace/editor menu integration. |
+| Context menu | Menu APIs do not expose enough context. | Treat context-menu support as blocked or requiring a documented workaround. |
+| Hover preview | Hover preview uses accessible link metadata or workspace events. | Implement a preview rewrite path. |
+| Hover preview | Hover preview uses internal-only native state. | Document limitation or investigate a separate supported hook. |
+| Middle-click | Native opens the new leaf before a reliable workspace event. | Retarget based on the measured event sequence. |
+| Middle-click | Native exposes a later reliable event or direct target. | Replace timeout fallback with that event/API. |
+| Middle-click | Delay remains visible. | Measure median and variance across samples before accepting for MVP. |
+| Mode policy | Event table confirms Live Preview source-text Ctrl-click opens a new leaf and Source mode Ctrl-click stays in the same leaf. | Encode this difference in `modePolicy.ts`. |
 
 ## Exit Criteria
 
 The investigation is complete when:
 
-- Native event sequence table is filled for all P1/P2 MVP modes and gestures.
+- Native event sequence table is filled for all P1/P2a/P2b MVP modes and gestures that affect editor behavior.
 - Split-pane source-path behavior is measured.
+- Timing-sensitive gestures have at least three samples with variance notes.
 - Context-menu and hover-preview feasibility are classified as supported, possible with workaround, or blocked by internal APIs.
 - A recommended listener strategy is written down.
 - Characterization tests are identified for the overhaul.

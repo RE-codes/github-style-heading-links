@@ -16,13 +16,14 @@ This is not a replacement for `plan/native-event-investigation.md`. This matrix 
 - **Unknown**: Not fully verified in the QA log.
 - **Public blocker**: Must be solved or documented before community/public release.
 - **P1**: Highest priority MVP coverage.
-- **P2**: MVP coverage, after P1.
+- **P2a**: MVP fixture, slug, and container coverage that can be closed before the editor refactor.
+- **P2b**: MVP source-mode parser coverage that should land after `linkExtraction.ts` is extracted.
 - **P3**: Public-release readiness coverage.
 - **P4**: Lowest priority public-release readiness or documentation coverage.
 
-P1 and P2 items are considered MVP scope. P3 and P4 items are considered public-release readiness scope.
+P1, P2a, and P2b items are considered MVP scope. P3 and P4 items are considered public-release readiness scope.
 
-This matrix extends the original MVP plan. MVP completion means the remaining `plan/gfm-fragment-links-plan.md` gaps plus the P1/P2 rows here are complete, explicitly MVP accepted, or explicitly deferred with rationale. P3/P4 rows should be reevaluated after the native event investigation and editor refactor.
+This matrix extends the original MVP plan. MVP completion means the remaining `plan/gfm-fragment-links-plan.md` gaps plus the P1/P2a/P2b rows here are complete, explicitly MVP accepted, or explicitly deferred with rationale. P3/P4 rows should be reevaluated after the native event investigation and editor refactor.
 
 ## Priority Taxonomy
 
@@ -38,27 +39,30 @@ P1 items protect the plugin's core promise and native non-disruption:
 - External links, wikilinks, embeds, and tags must remain native.
 - Core containers already encountered in real QA: normal paragraphs, callouts, and tables.
 
-P2 items cover common legal Markdown/GFM forms that are likely to appear in ordinary documents and can affect MVP correctness:
+P2a items cover common fixture, slug, and container cases that can be verified before the editor refactor:
+
+- ATX headings with closing hashes.
+- Setext headings.
+- Headings with square brackets, parentheses, escaped punctuation, links, images, HTML/entities, strikethrough, non-ASCII text, and emoji.
+- Links inside lists, task lists, and blockquotes.
+
+P2b items cover common legal Markdown/GFM source-link forms that need parser work and should land after `linkExtraction.ts` is extracted:
 
 - Inline links with titles.
 - Angle-bracket link destinations, especially paths with spaces.
 - Balanced and escaped parentheses in link destinations.
 - Percent-encoded `#` in filenames and percent-encoded fragments.
 - Link text with escaped brackets or matched nested brackets.
-- ATX headings with closing hashes.
-- Setext headings.
-- Headings with square brackets, parentheses, escaped punctuation, links, images, HTML/entities, strikethrough, non-ASCII text, and emoji.
-- Links inside lists, task lists, and blockquotes.
 
 P3 items are public-release readiness:
 
 - Reference, collapsed-reference, and shortcut-reference links.
 - Raw HTML anchors.
-- Full legal Markdown source-link parsing beyond the P2 inline-link subset, including multiline whitespace/title forms.
+- Full legal Markdown source-link parsing beyond the P2b inline-link subset, including reference and multiline forms.
 - Context-menu support.
 - Hover preview support.
 - Split-pane source-path correctness.
-- Mobile behavior.
+- Mobile behavior, if support is restored after the MVP is marked desktop-only.
 
 P4 items are lower-priority public-release polish or documentation:
 
@@ -83,7 +87,7 @@ P4 items are lower-priority public-release polish or documentation:
 | Live Preview | Source text | Middle-click | Open new tab, navigate to target heading, highlight heading plus children. | Matches native, with slight visual glitch in callout fixture. | GREEN with public blocker | Current path retargets native new tab. |
 | Source mode | Source text | Plain click | Place cursor only. | Matches native. | GREEN | Verified in duplicate and callout QA. |
 | Source mode | Source text | Ctrl/Cmd-click | Navigate in same tab and highlight heading plus children. | Matches native for first heading; duplicate fallback highlights heading only for `#foo-1` and `#foo-2`. | MVP accepted | Plugin acts on mouse button press; native appears to complete on release. |
-| Source mode | Source text | Middle-click | Open new tab in Live Preview and highlight heading plus children. | Matches native for first heading; duplicate fallback highlights heading only for `#foo-1` and `#foo-2`; noticeable delay. | MVP accepted with public blocker | Middle-click delay and visual flash need investigation. |
+| Source mode | Source text | Middle-click | Open new tab in Live Preview and highlight heading plus children. | Matches native for first heading; duplicate fallback highlights heading only for `#foo-1` and `#foo-2`; noticeable delay. | MVP acceptance pending measurement; public blocker | Measure delay across repeated samples before accepting for MVP. |
 
 ## Link Type Matrix
 
@@ -99,14 +103,14 @@ P4 items are lower-priority public-release polish or documentation:
 | P1 | Wikilinks and embeds, e.g. `[[Note]]`, `[[Note#Heading]]`, `![[Note]]`, `![[image.png]]` | Reading, Live Preview for wikilink | Native Obsidian behavior; plugin must not intercept. | Reading and Live Preview observed native wikilink navigation. Dedicated `wikilinks.md` row remains unchecked. | Partial | Embeds need explicit verification. |
 | P1 | Tag link, e.g. `#reading-test-tag` | Reading, Live Preview | Native tag behavior. | Observed native tag behavior. | GREEN | Source mode tag behavior not relevant to markdown link handler. |
 | P1 | Encoded path, e.g. `[x](encoded%20path%20with%20spaces.md#h)` | Current file QA | Decode path and navigate to heading. | Works. | GREEN | Recorded in `encoded path with spaces.md`. |
-| P2 | Inline link with title, e.g. `[x](Other.md#h "title")` | Not verified | Extract destination only and ignore title. | Current source regex likely mishandles this. | Unknown | Legal Markdown; needs source parser coverage. |
-| P2 | Angle-bracket destination, e.g. `[x](<Other File.md#h>)` | Not verified | Extract destination inside `<...>`, support spaces. | Not verified. | Unknown | CommonMark allows spaces only in angle-bracket destinations. |
-| P2 | Balanced parentheses in destination, e.g. `[x](Other(foo).md#h)` | Not verified | Extract full destination. | Current source regex likely truncates. | Unknown | Legal Markdown when parentheses are balanced. |
-| P2 | Escaped parentheses in destination, e.g. `[x](Other\(foo\).md#h)` | Not verified | Extract unescaped destination. | Not verified. | Unknown | Legal Markdown. |
-| P2 | Percent-encoded `#` in filename, e.g. `[x](File%23Name.md#h)` | Not verified | Decode filename `#` without treating it as fragment delimiter. | Not verified. | Unknown | Parser currently splits before decoding, which is promising but unverified. |
-| P2 | Percent-encoded fragment, e.g. `[x](Other.md#caf%C3%A9)` | Not verified | Decode fragment and match slug as appropriate. | Not verified. | Unknown | Needs fixture with non-ASCII heading/fragment. |
-| P2 | Link text with escaped brackets, e.g. `[a \[b\]](#h)` | Not verified | Source detector should still identify href. | Current source regex likely fails or is fragile. | Unknown | Legal Markdown. |
-| P2 | Link text with matched nested brackets, e.g. `[a [b]](#h)` | Not verified | Source detector should identify href. | Current source regex likely fails. | Unknown | Legal Markdown link text may contain matched bracket pairs. |
+| P2b | Inline link with title, e.g. `[x](Other.md#h "title")` | Not verified | Extract destination only and ignore title. | Current source regex likely mishandles this. | Unknown | Legal Markdown; implement after `linkExtraction.ts` extraction. |
+| P2b | Angle-bracket destination, e.g. `[x](<Other File.md#h>)` | Not verified | Extract destination inside `<...>`, support spaces. | Not verified. | Unknown | CommonMark allows spaces only in angle-bracket destinations. |
+| P2b | Balanced parentheses in destination, e.g. `[x](Other(foo).md#h)` | Not verified | Extract full destination. | Current source regex likely truncates. | Unknown | Legal Markdown when parentheses are balanced. |
+| P2b | Escaped parentheses in destination, e.g. `[x](Other\(foo\).md#h)` | Not verified | Extract unescaped destination. | Not verified. | Unknown | Legal Markdown. |
+| P2b | Percent-encoded `#` in filename, e.g. `[x](File%23Name.md#h)` | Not verified | Decode filename `#` without treating it as fragment delimiter. | Not verified. | Unknown | Parser currently splits before decoding, which is promising but unverified. |
+| P2b | Percent-encoded fragment, e.g. `[x](Other.md#caf%C3%A9)` | Not verified | Decode fragment and match slug as appropriate. | Not verified. | Unknown | Needs fixture with non-ASCII heading/fragment. |
+| P2b | Link text with escaped brackets, e.g. `[a \[b\]](#h)` | Not verified | Source detector should still identify href. | Current source regex likely fails or is fragile. | Unknown | Legal Markdown. |
+| P2b | Link text with matched nested brackets, e.g. `[a [b]](#h)` | Not verified | Source detector should identify href. | Current source regex likely fails. | Unknown | Legal Markdown link text may contain matched bracket pairs. |
 
 ## Heading Target Matrix
 
@@ -119,17 +123,17 @@ P4 items are lower-priority public-release polish or documentation:
 | P1 | Duplicate heading first occurrence | `#foo` lands on first heading. | Works and highlights heading plus children where native path is available. | GREEN | Verified in `duplicates.md`. |
 | P1 | Duplicate heading second occurrence | `#foo-1` lands on second heading. | Works; often highlights heading only due to line fallback. | MVP accepted | Public-release follow-up. |
 | P1 | Duplicate heading third occurrence | `#foo-2` lands on third heading. | Works; often highlights heading only due to line fallback. | MVP accepted | Public-release follow-up. |
-| P2 | ATX heading with closing hashes, e.g. `## Heading ##` | Slug should be based on heading text, not closing marker. | Not explicitly verified. | Unknown | Obsidian metadata may normalize this; verify. |
-| P2 | Setext heading | Slug should match heading text. | Not explicitly verified. | Unknown | Verify metadata heading cache behavior. |
-| P2 | Heading with square brackets, e.g. `## API [v2]` | Match GFM slug for bracketed text. | Not verified. | Unknown | Important because punctuation stripping affects slug. |
-| P2 | Heading with parentheses, e.g. `## Function foo(bar)` | Match GFM slug. | Not verified. | Unknown | Common in technical docs. |
-| P2 | Heading with escaped punctuation, e.g. `## Foo \[bar\]` | Match rendered/GFM heading text. | Not verified. | Unknown | Needs slug parity check. |
-| P2 | Heading with link, e.g. `## See [docs](url)` | Slug uses link text. | Slug unit coverage exists for link stripping; manual QA not explicit. | Partial | Add fixture row. |
-| P2 | Heading with image, e.g. `## ![alt](img.png) Title` | Slug should ignore or handle image consistently with GitHub. | Slug unit coverage exists for image stripping; manual QA not explicit. | Partial | Add fixture row. |
-| P2 | Heading with HTML/entities, e.g. `## Fish &amp; Chips`, `## <code>x</code>` | Match GFM/Obsidian rendered heading text. | HTML tag stripping unit coverage exists; entities not explicit. | Partial | Add fixture row. |
-| P2 | Heading with strikethrough, e.g. `## ~~Old~~ New` | Match GFM slug. | Not verified. | Unknown | GFM extension. |
-| P2 | Heading with non-ASCII/accented text, e.g. `## Café` | Match GFM slug and URL-decoded fragment. | Not verified. | Unknown | Pair with percent-encoded fragment test. |
-| P2 | Heading with emoji | Match GFM slug behavior. | Slug unit coverage exists for emoji. | Partial | Manual QA not explicit. |
+| P2a | ATX heading with closing hashes, e.g. `## Heading ##` | Slug should be based on heading text, not closing marker. | Not explicitly verified. | Unknown | Obsidian metadata may normalize this; verify. |
+| P2a | Setext heading | Slug should match heading text. | Not explicitly verified. | Unknown | Verify metadata heading cache behavior. |
+| P2a | Heading with square brackets, e.g. `## API [v2]` | Match GFM slug for bracketed text. | Not verified. | Unknown | Important because punctuation stripping affects slug. |
+| P2a | Heading with parentheses, e.g. `## Function foo(bar)` | Match GFM slug. | Not verified. | Unknown | Common in technical docs. |
+| P2a | Heading with escaped punctuation, e.g. `## Foo \[bar\]` | Match rendered/GFM heading text. | Not verified. | Unknown | Needs slug parity check. |
+| P2a | Heading with link, e.g. `## See [docs](url)` | Slug uses link text. | Slug unit coverage exists for link stripping; manual QA not explicit. | Partial | Add fixture row. |
+| P2a | Heading with image, e.g. `## ![alt](img.png) Title` | Slug should ignore or handle image consistently with GitHub. | Slug unit coverage exists for image stripping; manual QA not explicit. | Partial | Add fixture row. |
+| P2a | Heading with HTML/entities, e.g. `## Fish &amp; Chips`, `## <code>x</code>` | Match GFM/Obsidian rendered heading text. | HTML tag stripping unit coverage exists; entities not explicit. | Partial | Add fixture row. |
+| P2a | Heading with strikethrough, e.g. `## ~~Old~~ New` | Match GFM slug. | Not verified. | Unknown | GFM extension. |
+| P2a | Heading with non-ASCII/accented text, e.g. `## Café` | Match GFM slug and URL-decoded fragment. | Not verified. | Unknown | Pair with percent-encoded fragment test. |
+| P2a | Heading with emoji | Match GFM slug behavior. | Slug unit coverage exists for emoji. | Partial | Manual QA not explicit. |
 
 ## Container And Layout Matrix
 
@@ -138,9 +142,9 @@ P4 items are lower-priority public-release polish or documentation:
 | P1 | Normal paragraph link | Reading, Live Preview, Source | Match native behavior by mode and gesture. | Works in recorded QA. | GREEN | Baseline path. |
 | P1 | Callout link | Reading, Live Preview rendered/source text, Source | Match native behavior by mode and gesture. | Works, with visual glitch on Live Preview unrendered and Source middle-click. | GREEN with public blocker | Good regression fixture for event order. |
 | P1 | Table cell link | Reading, Live Preview rendered, Source | Match native behavior and avoid table-cell source selection. | Works; rendered click blocks table-cell source selection on pointerdown and navigates on pointerup. | GREEN | Strong evidence raw capture may have been needed, pending tracer. |
-| P2 | List item link | Not verified | Match native behavior by mode and gesture. | Not verified. | Unknown | Common document structure. |
-| P2 | Task list item link | Not verified | Match native behavior by mode and gesture without toggling checkbox accidentally. | Not verified. | Unknown | GFM extension. |
-| P2 | Blockquote link | Not verified | Match native behavior by mode and gesture. | Not verified. | Unknown | Similar to callouts but should be explicit. |
+| P2a | List item link | Not verified | Match native behavior by mode and gesture. | Not verified. | Unknown | Common document structure. |
+| P2a | Task list item link | Not verified | Match native behavior by mode and gesture without toggling checkbox accidentally. | Not verified. | Unknown | GFM extension. |
+| P2a | Blockquote link | Not verified | Match native behavior by mode and gesture. | Not verified. | Unknown | Similar to callouts but should be explicit. |
 | P3 | Split panes | Not verified | Clicked editor should resolve source path from clicked file, not necessarily active file. | Not verified. | Public blocker | Investigation should compare `editorInfoField.file`, `workspace.getActiveFile()`, and active editor state. |
 
 ## P3 Public-Release Readiness Items
@@ -157,7 +161,7 @@ These are not MVP scope under the current priority split, but should be handled 
 | Native integration | Context menu "Open in new tab/right" | Known public blocker. |
 | Native integration | Hover preview | Known public blocker. |
 | Workspace | Split panes | Deferred to public release; likely solved by editor-local context. |
-| Platform | Mobile behavior | Unknown because manifest currently sets `isDesktopOnly: false`. |
+| Platform | Mobile behavior | Personal MVP should set `isDesktopOnly: true`; mobile is only relevant if support is restored later. |
 
 ## P4 Lower-Priority Readiness Items
 
@@ -185,7 +189,7 @@ This section captures observed/inferred event contracts. It is lower-confidence 
 | Live Preview source text | Middle-click | Suppress duplicate source handling and retarget native new tab. | Native opens new tab; plugin has visual flash in callout. | Medium | Public-release blocker. |
 | Source mode source text | Plain click | Do not navigate; allow cursor placement. | Native places cursor. | High | Preserve. |
 | Source mode source text | Ctrl/Cmd-click | Navigate from markdown source link in same tab. | Native appears to complete on release; plugin acts on press. | Medium | Public-release blocker. |
-| Source mode source text | Middle-click | Retarget native new tab after it is created. | Native opens Live Preview tab; plugin has delay/flash. | Medium | Public-release blocker. |
+| Source mode source text | Middle-click | Retarget native new tab after it is created. | Native opens Live Preview tab; plugin has delay/flash. | Medium | Measure repeated samples before accepting for MVP; public-release blocker. |
 
 ## Context Menu And Hover Matrix
 
@@ -205,9 +209,9 @@ The following rows are not complete enough to rely on:
 4. Source-mode cross-file GFM fragment behavior.
 5. File-only link behavior.
 6. Missing file and missing heading behavior.
-7. P2 legal inline-link forms in Source mode.
-8. P2 heading target styles.
-9. P2 list/task-list/blockquote containers.
+7. P2a heading target styles.
+8. P2a list/task-list/blockquote containers.
+9. P2b legal inline-link forms in Source mode after `linkExtraction.ts` extraction.
 
 ## Public-Release Readiness Gaps
 

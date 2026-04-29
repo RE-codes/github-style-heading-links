@@ -22,15 +22,15 @@ Stretch target:
 
 Current release decisions:
 
-- MVP scope is the remaining original plan work plus P1/P2 rows in `plan/observed-behavior-matrix.md`.
+- MVP scope is the remaining original plan work plus P1, P2a, and P2b rows in `plan/observed-behavior-matrix.md`.
 - Close the remaining unchecked QA rows before refactoring. That is the lighter lift because those rows are already fixture-scoped and may only require verification or narrow fixes.
 - Before the editor overhaul, run a native event investigation. Public docs and typings expose useful primitives, but they do not expose Obsidian's internal native link-click implementation. The project should measure native event order instead of continuing to infer it from regressions.
 - Split-pane behavior is deferred to public/community release.
 - `workspace.activeLeaf` is deprecated/discouraged in the installed Obsidian typings. Current use in middle-click retargeting is acceptable only as MVP technical debt and should be replaced or isolated during the editor overhaul.
 - Keep one CodeMirror editor extension, but split the internals by link surface and mode policy. Live Preview is a hybrid editor/viewer, and its unrendered source text does not behave the same as Source mode source text.
 - Duplicate-heading child highlighting is acceptable for MVP. It is worth pursuing before public/community release, but may become a documented limitation if Obsidian does not expose a practical path.
-- Source-mode parsing needs two stages: P2 covers common legal inline forms for MVP, while full legal Markdown coverage is public-release readiness. The current regex detector is acceptable only as a temporary stepping stone.
-- Mobile support implications are unknown. Because the plugin currently sets `isDesktopOnly: false`, mobile behavior needs an explicit public-release decision.
+- Source-mode parsing needs three stages: current MVP fixture verification, P2b common legal inline forms after `linkExtraction.ts` is extracted, and full legal Markdown coverage for public-release readiness. The current regex detector is acceptable only as a temporary stepping stone.
+- The personal MVP should be desktop-only. The manifest currently sets `isDesktopOnly: false`; that should be changed to `true` before MVP completion because mobile behavior is unverified and not personally needed.
 - The MVP README should document deferred limitations.
 - Do not impose a hard architecture freeze after MVP. Refactoring should make feature work safer, not block all feature work.
 - Native Obsidian parity is the goal where it can be matched. If parity conflicts with GFM edge cases, decide case by case based on user value and implementation risk.
@@ -220,7 +220,7 @@ Specific unknowns:
 
 The practical opportunity is that better alignment with native event flow may unlock cleaner support for context menu, split panes, and hover preview. It may not, but the project should find out before layering more workarounds onto `src/editorModeHandler.ts`.
 
-### 7. Source Markdown Link Detection Is Below P2 MVP Scope
+### 7. Source Markdown Link Detection Is Below P2b MVP Scope
 
 `extractMarkdownLinkHrefAtOffset()` uses:
 
@@ -228,7 +228,9 @@ The practical opportunity is that better alignment with native event flow may un
 /\[[^\]]*\]\(([^)]+)\)/g
 ```
 
-That was consistent with the initial MVP plan, but the priority matrix now classifies several common legal inline-link forms as P2 MVP scope: titles, angle-bracket destinations, balanced or escaped parentheses in destinations, percent-encoded fragments, and bracketed link text. The current regex is therefore below the updated MVP target for Source mode.
+That was consistent with the initial MVP plan, but the priority matrix now classifies several common legal inline-link forms as P2b MVP scope: titles, angle-bracket destinations, balanced or escaped parentheses in destinations, percent-encoded fragments, and bracketed link text. The current regex is therefore below the updated MVP target for Source mode.
+
+Do not implement that parser inside the current `createEditorExtension()` monolith. Extract `linkExtraction.ts` first, define the source-link extraction contract there, then implement the P2b parser against that smaller pure boundary.
 
 Full legal Markdown coverage, including reference links and multiline forms, remains public-release readiness rather than personal MVP scope.
 
@@ -281,17 +283,20 @@ No full pivot is needed. The current architecture got the important split mostly
 The required pivot is narrower:
 
 1. Stop treating `src/editorModeHandler.ts` as the place where all new edge cases go.
-2. Close P1/P2 rows in `plan/observed-behavior-matrix.md` or explicitly defer them with rationale.
+2. Close P1 and P2a rows in `plan/observed-behavior-matrix.md` or explicitly defer them with rationale.
 3. Run the native event investigation in `plan/native-event-investigation.md`.
 4. Add characterization coverage for full gesture sequences.
-5. Extract the editor-mode state machine into named concepts.
-6. Freeze nonessential editor behavior until the current QA matrix is closed.
+5. Extract `linkExtraction.ts`, then implement P2b parser behavior against that module.
+6. Extract the remaining editor-mode state machine into named concepts.
+7. Freeze nonessential editor behavior until the current QA matrix is closed.
 
 The MVP is still reachable, but a community-ready version needs an editor-adapter hardening pass.
 
-Given the current release direction, finish the remaining original-plan gaps and P1/P2 QA and fixture rows before the editor refactor. The refactor is still important, but doing it first would move a behavior surface that is not fully classified yet.
+Given the current release direction, finish the remaining original-plan gaps and P1/P2a QA and fixture rows before the editor refactor. The refactor is still important, but doing it first would move a behavior surface that is not fully classified yet.
 
 The one exception is investigation instrumentation. Instrumentation should happen before the refactor because it informs whether the refactor is aligning with Obsidian's actual event model or preserving current workarounds.
+
+The second exception is P2b parser implementation. Because it belongs in `linkExtraction.ts`, extract that module before implementing parser-shaped P2b behavior. This avoids adding parser complexity to code that is about to be moved.
 
 ## Target Shape
 
@@ -331,13 +336,12 @@ Answered:
 5. The editor overhaul should keep one CodeMirror extension but split rendered-link handling, source-text handling, and mode-specific gesture policy.
 6. Run a native event investigation before the editor overhaul so the refactor is based on measured Obsidian behavior.
 7. Duplicate-heading child highlighting is acceptable for MVP, worth pursuing for public/community release, and may become a documented limitation if Obsidian architecture blocks it.
-8. Source-mode parsing should handle P2 common legal inline-link forms for MVP; full legal Markdown parsing remains public-release readiness.
-9. Mobile implications are unknown and need investigation before public/community release because `isDesktopOnly` is currently `false`.
+8. Source-mode parsing should handle P2b common legal inline-link forms for MVP after `linkExtraction.ts` is extracted; full legal Markdown parsing remains public-release readiness.
+9. Mobile is not part of the personal MVP. Set `isDesktopOnly: true` before MVP completion, and reopen mobile only as a public-release decision if desired.
 10. The README should document deferred limitations for MVP.
 11. No hard architecture freeze is desired; refactoring should preserve the ability to keep working on feature completeness.
 12. Native parity versus GFM edge cases should be decided case by case when they materially conflict.
 
 Still open:
 
-1. Should the personal MVP remain `isDesktopOnly: false`, or should the manifest become desktop-only until mobile behavior is understood?
-2. Which legal Markdown link parser should be used or adapted for public release?
+1. Which Markdown parser or CodeMirror/Lezer route should be used for P2b legal inline-link detection?

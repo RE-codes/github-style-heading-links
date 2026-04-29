@@ -27,41 +27,49 @@ Personal-use nice-to-haves that are public/community release blockers:
 - Replacing or isolating deprecated `workspace.activeLeaf` usage in editor gesture handling.
 - A solution, or clearly documented limitation, for duplicate-heading child highlighting.
 - Split-pane source-path correctness.
-- Full legal Markdown link parsing in Source mode. P2 common inline-link forms are MVP scope.
+- Full legal Markdown link parsing in Source mode. P2b common inline-link forms are MVP scope after `linkExtraction.ts` is extracted.
 
 Mobile status:
 
-- Unknown. The plugin currently declares `isDesktopOnly: false`, so mobile support needs investigation before public/community release or the manifest should be narrowed.
+- Not part of the personal MVP. The manifest should be narrowed to `isDesktopOnly: true` before MVP completion. Mobile can be reopened later as a public/community release decision if there is real demand.
 
 Coverage priority:
 
-- MVP scope is the remaining `plan/gfm-fragment-links-plan.md` work plus P1 and P2 rows in `plan/observed-behavior-matrix.md`.
-- P1 and P2 rows in `plan/observed-behavior-matrix.md` are MVP scope.
+- MVP scope is the remaining `plan/gfm-fragment-links-plan.md` work plus P1, P2a, and P2b rows in `plan/observed-behavior-matrix.md`.
+- P1, P2a, and P2b rows in `plan/observed-behavior-matrix.md` are MVP scope.
+- P2a covers fixture, slug, and container verification that can be closed before the refactor.
+- P2b covers source-mode legal inline-link parser work and should land after `linkExtraction.ts` is extracted.
 - P3 and P4 rows are public-release readiness scope.
 
 Sequencing:
 
-1. Finish the original MVP plan gaps and P1/P2 coverage.
+1. Finish the original MVP plan gaps and P1/P2a coverage.
 2. Run the native event investigation as pre-refactor discovery.
-3. Reorganize/refactor the editor adapter.
-4. Reevaluate and implement P3/P4 public-release readiness work.
-5. Prepare the public/community release candidate.
+3. Extract `linkExtraction.ts`.
+4. Implement P2b parser behavior against the extracted link-extraction boundary.
+5. Reorganize/refactor the rest of the editor adapter.
+6. Reevaluate and implement P3/P4 public-release readiness work.
+7. Prepare the public/community release candidate.
 
 ## Recommendation
 
 Proceed with the MVP, but add one architecture-hardening step before declaring it complete:
 
 1. Close the currently open original-plan and P1 QA rows.
-2. Add and verify P1/P2 fixture coverage from `plan/observed-behavior-matrix.md`.
+2. Add and verify P1/P2a fixture coverage from `plan/observed-behavior-matrix.md`.
 3. Run the native event investigation in `plan/native-event-investigation.md`.
 4. Add sequence-level tests for editor gestures.
-5. Split `src/editorModeHandler.ts` around gesture state, target extraction, and retargeting.
-6. Re-run unit tests, type check, and focused manual QA after each extraction.
-7. Defer P3/P4 items, including hover preview, context-menu support, split panes, mobile, and full legal Markdown parsing, until public-release readiness.
+5. Extract `src/editor/linkExtraction.ts`.
+6. Implement P2b parser behavior in the extracted link-extraction module.
+7. Split the remaining `src/editorModeHandler.ts` concerns around gesture state, mode policy, workspace context, and retargeting.
+8. Re-run unit tests, type check, and focused manual QA after each extraction.
+9. Defer P3/P4 items, including hover preview, context-menu support, split panes, mobile, and full legal Markdown parsing, until public-release readiness.
 
-The lighter path is to close the remaining existing QA rows before refactoring. Then fill the P1/P2 gaps from the observed behavior matrix. Refactoring first would move code before the current behavior surface is fully classified.
+The lighter path is to close the remaining existing QA rows before refactoring. Then fill the P1/P2a gaps from the observed behavior matrix. Refactoring first would move code before the current behavior surface is fully classified.
 
 The investigation is an exception to "close QA before refactor": it should happen before the overhaul because it is read-only instrumentation intended to reveal native behavior, not product behavior.
+
+P2b parser work is the other exception. It should not be implemented inside the current monolith. Extract `linkExtraction.ts` first, then add parser behavior and parser tests against that pure boundary.
 
 Do not impose a hard architecture freeze after MVP. The intent is to make feature work safer by reorganizing the editor adapter, while still allowing focused feature-completeness cycles.
 
@@ -125,11 +133,11 @@ Decision point:
 - If these rows pass, the MVP is closer than the size of `createEditorExtension()` makes it feel.
 - If they fail because of editor event ordering, handle that before refactoring.
 
-## Phase 2: Add P1/P2 Fixture Coverage
+## Phase 2: Add P1/P2a Fixture Coverage
 
 Behavior being protected:
 
-- MVP behavior listed as P1 and P2 in `plan/observed-behavior-matrix.md`.
+- MVP behavior listed as P1 and P2a in `plan/observed-behavior-matrix.md`.
 
 Files likely touched:
 
@@ -143,10 +151,10 @@ Files likely touched:
 Work items:
 
 1. Add fixture rows for P1 gaps: file-only links, missing files, existing file with missing heading, empty fragments, external schemes, wikilinks, and embeds.
-2. Add fixture rows and pure tests for P2 inline-link forms: titles, angle-bracket destinations, balanced/escaped parentheses, percent-encoded `#` in filenames, percent-encoded fragments, escaped bracket link text, and matched nested bracket link text.
-3. Add fixture rows and slug tests for P2 heading targets: closing hashes, setext headings, square brackets, parentheses, escaped punctuation, links, images, HTML/entities, strikethrough, non-ASCII text, and emoji.
-4. Add fixture rows for P2 containers: lists, task lists, and blockquotes.
-5. Mark each P1/P2 row in `plan/observed-behavior-matrix.md` as GREEN, explicitly MVP accepted, or explicitly deferred with rationale.
+2. Add fixture rows and slug tests for P2a heading targets: closing hashes, setext headings, square brackets, parentheses, escaped punctuation, links, images, HTML/entities, strikethrough, non-ASCII text, and emoji.
+3. Add fixture rows for P2a containers: lists, task lists, and blockquotes.
+4. Add placeholder fixture rows for P2b source parser cases, but do not implement parser behavior in the monolith.
+5. Mark each P1/P2a row in `plan/observed-behavior-matrix.md` as GREEN, explicitly MVP accepted, or explicitly deferred with rationale.
 
 Validation:
 
@@ -156,7 +164,7 @@ Validation:
 
 Decision point:
 
-- If a P2 row requires a broad parser rewrite, decide whether to implement it now or explicitly defer it with rationale. Do not silently leave it as Unknown.
+- If a P2a row unexpectedly requires parser work, reclassify it as P2b and handle it after `linkExtraction.ts` extraction. Do not silently leave it as Unknown.
 
 ## Phase 3: Run Native Event Investigation
 
@@ -265,7 +273,35 @@ Why this is the smallest safe extraction:
 
 - It separates "what link was clicked" from "what should this event do." That reduces repeated DOM/source detection across event handlers.
 
-## Phase 6: Extract Mode Policy
+## Phase 6: Implement P2b Source Parser
+
+Behavior being changed:
+
+- Source-mode link detection should handle common legal inline Markdown forms listed as P2b in `plan/observed-behavior-matrix.md`.
+
+Files likely touched:
+
+- `src/editor/linkExtraction.ts`
+- `src/editor/linkExtraction.test.ts`
+- Possibly `src/linkParser.ts` if URL splitting or decoding needs a narrow pure helper.
+
+Work items:
+
+1. Choose the smallest parser strategy that covers P2b inline links without committing to full public-release Markdown parsing.
+2. Add RED tests for titles, angle-bracket destinations, balanced and escaped parentheses, percent-encoded `#` in filenames, percent-encoded fragments, escaped bracket link text, and matched nested bracket link text.
+3. Implement parser behavior at the link-extraction boundary.
+4. Confirm existing source-mode behavior and non-interception cases still pass.
+
+Validation:
+
+- `npm test -- src/editor/linkExtraction.test.ts`
+- `npm test`
+
+Decision point:
+
+- If the small parser strategy starts turning into full CommonMark parsing, stop and choose a real parser or explicitly defer the problematic P2b row with rationale. Do not let this phase recreate the `editorModeHandler.ts` complexity problem in a new file.
+
+## Phase 7: Extract Mode Policy
 
 Behavior being changed:
 
@@ -311,7 +347,7 @@ Why this matters:
 
 - It removes inline expressions such as `isLivePreview && (event.ctrlKey || event.metaKey)` from event handlers and makes native-parity decisions reviewable.
 
-## Phase 7: Extract Gesture State And Commands
+## Phase 8: Extract Gesture State And Commands
 
 Behavior being changed:
 
@@ -356,7 +392,7 @@ Why this matters:
 
 - Future event-order fixes should edit a transition table or command-producing function, not scatter changes across six listener methods.
 
-## Phase 8: Extract Middle-Click Retargeting
+## Phase 9: Extract Middle-Click Retargeting
 
 Behavior being changed:
 
@@ -400,7 +436,7 @@ Optional improvement:
 
 - Record whether timeout fallback was used in tests or logs. Do not add user-facing logging for MVP unless needed.
 
-## Phase 9: Rebuild `createEditorExtension()` As Wiring
+## Phase 10: Rebuild `createEditorExtension()` As Wiring
 
 Behavior being changed:
 
@@ -427,7 +463,7 @@ Validation:
 - `npm run check`
 - Manual QA for the event rows touched in Phase 1 and Phase 2
 
-## Phase 10: Reassess CodeMirror Integration
+## Phase 11: Reassess CodeMirror Integration
 
 Do this only after the behavior is characterized.
 
@@ -453,14 +489,14 @@ Exit criterion:
 
 - If a documented CodeMirror handler changes native parity, keep the raw listener and document why.
 
-## Phase 11: Decide Public-Release Hardening
+## Phase 12: Decide Public-Release Hardening
 
 These are not personal MVP blockers. They are public/community release blockers unless explicitly documented as accepted limitations.
 
 Potential hardening work:
 
 1. Source Markdown parsing:
-   Extend beyond P2 MVP coverage to full legal Markdown links, including reference, collapsed-reference, shortcut-reference, and multiline/title forms.
+   Extend beyond P2b MVP coverage to full legal Markdown links, including reference, collapsed-reference, shortcut-reference, and multiline/title forms.
 
 2. Hover previews:
    Use the native event investigation to determine whether hover preview uses the same link metadata path as click navigation or a separate preview path. Then investigate whether Obsidian exposes a stable hook for rewritten fragment targets.
@@ -478,7 +514,7 @@ Potential hardening work:
    Try to match native highlighting for fallback line navigation. If Obsidian does not expose a practical API, document the limitation.
 
 7. Mobile behavior:
-   Investigate whether editor extensions, reading post-processors, gestures, and new-leaf behavior work on mobile. If not, set `isDesktopOnly: true`.
+   Reopen only if public/community release needs mobile support. The personal MVP should already be marked desktop-only with `isDesktopOnly: true`.
 
 8. Metadata timing:
    Consider a retry path when heading cache is missing or stale.
@@ -491,15 +527,16 @@ Validation:
 ## Proposed Near-Term Order
 
 1. Finish the unchecked QA rows in `plan/QA-log.md` and remaining MVP items from `plan/gfm-fragment-links-plan.md`.
-2. Add and verify P1/P2 fixture coverage from `plan/observed-behavior-matrix.md`.
+2. Add and verify P1/P2a fixture coverage from `plan/observed-behavior-matrix.md`.
 3. Run the native event investigation in `plan/native-event-investigation.md`.
 4. Add gesture sequence tests for rendered left-click, rendered middle-click, source Ctrl-click, and source middle-click.
 5. Extract link detection from `src/editorModeHandler.ts`.
-6. Extract mode policy for Source mode versus Live Preview differences.
-7. Extract middle-click retargeting.
+6. Implement P2b source parser behavior in `src/editor/linkExtraction.ts`.
+7. Extract mode policy for Source mode versus Live Preview differences.
 8. Extract gesture state and suppression flags.
-9. Run `npm test` and `npm run check`.
-10. Repeat the manual QA matrix sections that cover Reading mode, Live Preview, Source mode, callouts, tables, duplicates, empty fragments, external links, and wikilinks.
+9. Extract middle-click retargeting.
+10. Run `npm test` and `npm run check`.
+11. Repeat the manual QA matrix sections that cover Reading mode, Live Preview, Source mode, callouts, tables, duplicates, empty fragments, external links, and wikilinks.
 
 ## MVP Completion Gate
 
@@ -507,11 +544,13 @@ Personal MVP gate:
 
 - `npm test` passes.
 - `npm run check` passes.
+- Manifest is narrowed to `isDesktopOnly: true` unless mobile has been explicitly investigated and accepted.
 - Remaining MVP items from `plan/gfm-fragment-links-plan.md` are complete or explicitly deferred with rationale.
-- All P1 and P2 rows in `plan/observed-behavior-matrix.md` are GREEN, explicitly marked MVP accepted, or explicitly deferred with rationale.
-- All QA rows in `plan/QA-log.md` that correspond to P1/P2 behavior are either GREEN or explicitly marked as deferred.
-- README documents deferred limitations, including hover preview, context-menu actions, source parser limits, middle-click visual delay, duplicate-heading child highlighting, split panes, and mobile unknowns.
-- No new behavior is added directly to the current `createEditorExtension()` body.
+- All P1, P2a, and P2b rows in `plan/observed-behavior-matrix.md` are GREEN, explicitly marked MVP accepted, or explicitly deferred with rationale.
+- All QA rows in `plan/QA-log.md` that correspond to P1/P2a/P2b behavior are either GREEN or explicitly marked as deferred.
+- Source-mode middle-click delay has been measured with repeated samples and is either accepted for MVP with a number or fixed.
+- README documents deferred limitations, including hover preview, context-menu actions, source parser limits beyond P2b, middle-click visual delay, duplicate-heading child highlighting, split panes, and desktop-only support.
+- No parser-shaped or broad gesture behavior is added directly to the current `createEditorExtension()` body. Narrow P1/P2a bug fixes are acceptable only with tests and a matching QA row.
 
 Community-plugin gate:
 
@@ -522,8 +561,8 @@ Community-plugin gate:
 - Direct deprecated `workspace.activeLeaf` usage is removed or isolated behind a documented helper.
 - Duplicate-heading child highlighting is solved or documented as blocked by Obsidian architecture.
 - Split-pane behavior verified.
-- Source-mode parsing handles legal Markdown links beyond the P2 MVP subset.
-- Mobile behavior is verified or the plugin is marked desktop-only.
+- Source-mode parsing handles legal Markdown links beyond the P2b MVP subset.
+- Mobile behavior is verified if mobile support is restored; otherwise desktop-only support is documented.
 - Manual QA has been run on the real target Obsidian version.
 
 ## Clarifying Questions
@@ -537,8 +576,8 @@ Answered:
 5. Keep one CodeMirror extension, but split rendered-link behavior, source-text behavior, and mode-specific gesture policy.
 6. Run a native event investigation before the editor overhaul.
 7. Duplicate-heading child highlighting is acceptable for MVP, worth pursuing for public/community release, and may become a documented limitation.
-8. Source-mode parsing should handle P2 common inline-link forms for MVP and full legal Markdown links for public release.
-9. Mobile implications are unknown and need investigation before public/community release.
+8. Source-mode parsing should handle P2b common inline-link forms for MVP after `linkExtraction.ts` is extracted, and full legal Markdown links for public release.
+9. Mobile is out of MVP scope; mark the plugin desktop-only before MVP completion.
 10. The README should document deferred MVP limitations.
 11. Do not use a hard architecture freeze; keep feature-completeness cycles possible.
 12. Native parity versus GFM edge cases should be decided case by case when they conflict.
@@ -546,5 +585,4 @@ Answered:
 
 Still open:
 
-1. Should `isDesktopOnly` remain `false` for personal MVP, or should it become `true` until mobile is investigated?
-2. Which Markdown parser or CodeMirror/Lezer route should be used for legal Markdown link detection?
+1. Which Markdown parser or CodeMirror/Lezer route should be used for P2b legal inline-link detection?
