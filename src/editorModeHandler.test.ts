@@ -869,6 +869,80 @@ describe("handleSourceMouseDown", () => {
     });
   });
 
+  it("navigates source ctrl-click mouseup in the same leaf", () => {
+    const sourceFile = makeFile("reading.md");
+    const event = new MouseEvent("mouseup", { button: 0, ctrlKey: true });
+    const previousLeaf = {} as WorkspaceLeaf;
+    const navigations: unknown[] = [];
+
+    handleUnanchoredMouseUp(
+      event,
+      {
+        previousLeaf,
+        target: {
+          file: sourceFile,
+          line: 4,
+          heading: "Target Heading",
+          requiresLineFallback: false
+        },
+        newLeaf: false
+      },
+      (target, newLeaf, options) => {
+        navigations.push({ target, newLeaf, options });
+      }
+    );
+
+    expect(navigations).toEqual([
+      {
+        target: {
+          file: sourceFile,
+          line: 4,
+          heading: "Target Heading",
+          requiresLineFallback: false
+        },
+        newLeaf: false,
+        options: { fallbackToLine: false }
+      }
+    ]);
+  });
+
+  it("navigates live preview source ctrl-click mouseup in a new leaf", () => {
+    const sourceFile = makeFile("reading.md");
+    const event = new MouseEvent("mouseup", { button: 0, ctrlKey: true });
+    const previousLeaf = {} as WorkspaceLeaf;
+    const navigations: unknown[] = [];
+
+    handleUnanchoredMouseUp(
+      event,
+      {
+        previousLeaf,
+        target: {
+          file: sourceFile,
+          line: 4,
+          heading: "Target Heading",
+          requiresLineFallback: false
+        },
+        newLeaf: true
+      },
+      (target, newLeaf, options) => {
+        navigations.push({ target, newLeaf, options });
+      }
+    );
+
+    expect(navigations).toEqual([
+      {
+        target: {
+          file: sourceFile,
+          line: 4,
+          heading: "Target Heading",
+          requiresLineFallback: false
+        },
+        newLeaf: true,
+        options: { fallbackToLine: false }
+      }
+    ]);
+  });
+
   it("does not navigate twice when rendered pointerup is followed by unanchored mouseup", () => {
     const sourceFile = makeFile("table.md");
     const pointerUp = new MouseEvent("pointerup", { button: 0 });
