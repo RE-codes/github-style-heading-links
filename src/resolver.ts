@@ -1,7 +1,7 @@
 import { TFile } from "obsidian";
 import type { App } from "obsidian";
 
-import { buildSlugTable, findHeadingIndexBySlug } from "./slug";
+import { buildSlugTable, findHeadingIndexBySlug, slugify } from "./slug";
 import type { ParsedLink } from "./linkParser";
 
 export interface ResolvedTarget {
@@ -39,9 +39,10 @@ export class LinkResolver {
     const headings = this.app.metadataCache.getFileCache(file)?.headings ?? [];
     const slugs = buildSlugTable(headings.map((heading) => heading.heading));
     const headingIndex = findHeadingIndexBySlug(slugs, parsed.fragment);
-    // GFM duplicate slugs resolve to later slug-table entries such as foo-1;
-    // the first occurrence can still use Obsidian's native #Heading lookup.
-    const requiresLineFallback = headingIndex > 0;
+    // Slug-table disambiguation suffixes such as foo-1 and foo-2 cannot use
+    // Obsidian's native #Heading lookup, so they need line fallback.
+    const requiresLineFallback =
+      headingIndex >= 0 && slugs[headingIndex] !== slugify(headings[headingIndex].heading);
 
     return {
       file,

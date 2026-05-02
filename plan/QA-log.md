@@ -136,15 +136,53 @@ Manual QA in `callout.md`:
 
 ### Empty Fragments And Native Links
 
-- [ ] RED: clicking `[empty fragment](empty-fragment.md#)` in `empty-fragment.md` should open `empty-fragment.md` without scrolling.
+- [x] GREEN: `[empty fragment](empty-fragment.md#)` in `empty-fragment.md` matches native empty-fragment behavior with no scroll.
+
+Manual QA in `empty-fragment.md`:
+
+| Mode | Link state | Gesture | Native behavior | Plugin behavior | Status |
+|---|---|---|---|---|---|
+| Reading | rendered | click | No visible response; hover preview may report unable to find empty heading. | Matches native. | GREEN |
+| Reading | rendered | Ctrl-click | Opens new tab; cursor is at top of page with no scroll. | Matches native. | GREEN |
+| Reading | rendered | middle-click | Same as Ctrl-click. | Matches native. | GREEN |
+| Live Preview | rendered | click | No visible response. | Matches native. | GREEN |
+| Live Preview | rendered | Ctrl-click | Opens new tab on mouse release; cursor is at top of page with no scroll. | Matches native after release-timing fix. | GREEN |
+| Live Preview | rendered | middle-click | Same as Ctrl-click. | Matches native. | GREEN |
+| Live Preview | unrendered | click | Places cursor at click location. | Matches native. | GREEN |
+| Live Preview | unrendered | Ctrl-click | Opens new tab on mouse release; cursor is at top of page with no scroll. | Matches native after release-timing fix. | GREEN |
+| Live Preview | unrendered | middle-click | Opens new tab; cursor is at top of page with no scroll. | Matches native. | GREEN |
+| Source mode | unrendered | click | Places cursor at click location. | Matches native. | GREEN |
+| Source mode | unrendered | Ctrl-click | Navigates to file in same tab on mouse release. | Matches native after release-timing fix. | GREEN |
+| Source mode | unrendered | middle-click | Opens new tab; cursor is at top of page with no scroll. | Matches native. | GREEN |
+
+Plugin-off reversibility: native Obsidian accepts the empty fragment without user-visible error. The plugin-on differences found during QA were event-timing differences; Ctrl-click release timing now matches native in rendered Live Preview, unrendered Live Preview, and Source mode.
+
+### GFM And Native Heading Link Pair
+
+Manual parity fixtures:
+
+- `test-gfm.md` uses GFM slug fragments such as `[same later](#another-heading)`.
+- `test-native.md` uses native Obsidian fragments such as `[same later](#Another%20Heading)`.
+- Native Markdown heading fragments must remain native-handled; the plugin should only handle GFM slug fragments that native Obsidian does not already resolve.
+- Both fixtures intentionally cover a top heading and a later non-duplicate heading. Duplicate heading parity is intentionally left to `duplicates.md` and future work because native Obsidian duplicate-heading behavior relies on `^` block identifiers rather than GFM slug suffixes.
+
+Manual QA in `test-gfm.md` and `test-native.md`:
+
+| Mode | Link set | Gesture | Observed behavior | Status |
+|---|---|---|---|---|
+| Reading | GFM and native heading links | click / Ctrl-click / middle-click | GFM links match native fixture behavior; native links remain native-handled. | GREEN |
+| Live Preview | rendered GFM and native heading links | click / Ctrl-click / middle-click | GFM links match native fixture behavior; native links remain native-handled. | GREEN |
+| Live Preview | unrendered GFM and native heading links | click / Ctrl-click / middle-click | GFM links match native fixture behavior; native links remain native-handled. Middle-click has a slight highlight delay. | GREEN |
+| Source mode | unrendered GFM and native heading links | click / Ctrl-click / middle-click | GFM links match native fixture behavior; native links remain native-handled. Middle-click has a slight highlight delay. | GREEN |
+
 - [ ] RED: clicking external links in `external.md` should use native external behavior and should not be intercepted.
 - [ ] RED: clicking wikilinks or embeds in `wikilinks.md` should use native Obsidian behavior and should not be intercepted.
 
 ## Follow-Up Items
 
 - Hover previews for same-file and cross-file GFM fragment links still use Obsidian's native preview path and can show unresolved fragment text, e.g. unable to find `"target-heading"`.
-- Live Preview unrendered Ctrl-click acts on mouse button press rather than release in the callout fixture. Native Obsidian appears to open the new tab on release.
+- Live Preview unrendered Ctrl-click now acts on mouse release for `empty-fragment.md`; recheck the callout fixture before removing this as a broader follow-up.
 - Live Preview unrendered and Source mode middle-click show a notable visual flash in the new tab in the callout fixture, briefly appearing rendered, unrendered, then rendered. This has only been observed in `callout.md` so far. Treat this as a likely code/event-order bug, not just cosmetic polish.
-- Source mode Ctrl-click acts on mouse button press rather than release in the callout fixture. Native Obsidian appears to place the cursor and highlight on release.
-- Source mode middle-click has a noticeable delay before the new tab highlights the target heading plus children. Treat this as a likely event-order or retargeting timing issue.
+- Source mode Ctrl-click now acts on mouse release for `empty-fragment.md`; recheck the callout fixture before removing this as a broader follow-up.
+- Live Preview unrendered and Source mode middle-click have a slight delay before the new tab highlights the target heading plus children. Accepted for MVP, but treat this as a likely event-order or retargeting timing issue.
 - Context-menu "Open in new tab" and "Open to the right" on GFM fragment links open the target file but do not navigate to or highlight the target heading. Observed on a rendered Live Preview link; scope across modes and fixtures not yet verified.

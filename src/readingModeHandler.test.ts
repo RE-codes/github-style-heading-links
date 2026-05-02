@@ -51,9 +51,50 @@ describe("decideAction", () => {
 
     expect(decideAction(anchor)).toEqual({ kind: "ignore" });
   });
+
+  it("ignores native heading fragments", () => {
+    const anchor = document.createElement("a");
+    anchor.setAttribute("href", "#Another%20Heading");
+
+    expect(decideAction(anchor)).toEqual({ kind: "ignore" });
+  });
 });
 
 describe("handleReadingAnchorEvent", () => {
+  it("does not intercept slug-shaped fragments that match native headings exactly", () => {
+    const sourceFile = makeFile("reading.md");
+    const app = makeApp({
+      files: [sourceFile],
+      headingEntries: [[sourceFile, [heading("foo-bar", 4)]]]
+    });
+    const resolver = new LinkResolver(app as unknown as App);
+    const anchor = document.createElement("a");
+    const event = new MouseEvent("click");
+    const navigations: unknown[] = [];
+    let stoppedImmediately = false;
+
+    anchor.setAttribute("data-href", "#foo-bar");
+    event.stopImmediatePropagation = () => {
+      stoppedImmediately = true;
+    };
+
+    const handled = handleReadingAnchorEvent(
+      anchor,
+      event,
+      resolver,
+      sourceFile.path,
+      (target, newLeaf) => {
+        navigations.push({ target, newLeaf });
+      }
+    );
+
+    expect({ handled, stoppedImmediately, navigations }).toEqual({
+      handled: false,
+      stoppedImmediately: false,
+      navigations: []
+    });
+  });
+
   it("navigates middle-clicks in a new leaf", () => {
     const sourceFile = makeFile("reading.md");
     const app = makeApp({
