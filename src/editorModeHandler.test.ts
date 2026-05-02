@@ -30,7 +30,7 @@ describe("createEditorExtension", () => {
 
 describe("retargetNativeMiddleClickTab", () => {
   it("retargets the native tab without line fallback", async () => {
-    const sourceFile = makeFile("reading.md");
+    const sourceFile = makeFile("test-source.md");
     const previousLeaf = {} as WorkspaceLeaf;
     const app = {
       workspace: {
@@ -148,7 +148,7 @@ describe("retargetNativeMiddleClickTab", () => {
   });
 
   it("waits for the target file to open before retargeting", async () => {
-    const sourceFile = makeFile("reading.md");
+    const sourceFile = makeFile("test-source.md");
     const otherFile = makeFile("other.md");
     const previousLeaf = {} as WorkspaceLeaf;
     const events: string[] = [];
@@ -254,7 +254,7 @@ describe("handleRenderedAnchorMouseDown", () => {
   });
 
   it("tracks rendered anchor links on left-button mousedown without navigating", () => {
-    const sourceFile = makeFile("reading.md");
+    const sourceFile = makeFile("test-source.md");
     const app = makeApp({
       files: [sourceFile],
       headingEntries: [[sourceFile, [heading("Target Heading", 4)]]]
@@ -280,7 +280,7 @@ describe("handleRenderedAnchorMouseDown", () => {
   });
 
   it("tracks rendered data-href elements on left-button mousedown without navigating", () => {
-    const sourceFile = makeFile("reading.md");
+    const sourceFile = makeFile("test-source.md");
     const app = makeApp({
       files: [sourceFile],
       headingEntries: [[sourceFile, [heading("Target Heading", 4)]]]
@@ -345,7 +345,7 @@ describe("handleRenderedAnchorMouseDown", () => {
   });
 
   it("navigates rendered middle-button mouseup directly in a new leaf", () => {
-    const sourceFile = makeFile("reading.md");
+    const sourceFile = makeFile("test-source.md");
     const event = new MouseEvent("mouseup", { button: 1 });
     const previousLeaf = {} as WorkspaceLeaf;
     const navigations: unknown[] = [];
@@ -463,7 +463,7 @@ describe("handleRenderedAnchorMouseDown", () => {
 
 describe("handleSourceMouseDown", () => {
   it("does not navigate source links on plain left-click", () => {
-    const sourceFile = makeFile("reading.md");
+    const sourceFile = makeFile("test-source.md");
     const app = makeApp({
       files: [sourceFile],
       headingEntries: [[sourceFile, [heading("Target Heading", 4)]]]
@@ -500,7 +500,7 @@ describe("handleSourceMouseDown", () => {
   });
 
   it("does not intercept native heading fragments in source links", () => {
-    const sourceFile = makeFile("reading.md");
+    const sourceFile = makeFile("test-source.md");
     const app = makeApp({
       files: [sourceFile],
       headingEntries: [[sourceFile, [heading("Another Heading", 4)]]]
@@ -546,7 +546,7 @@ describe("handleSourceMouseDown", () => {
   });
 
   it("tracks source links on ctrl-click mousedown without navigating", () => {
-    const sourceFile = makeFile("reading.md");
+    const sourceFile = makeFile("test-source.md");
     const app = makeApp({
       files: [sourceFile],
       headingEntries: [[sourceFile, [heading("Target Heading", 4)]]]
@@ -583,7 +583,7 @@ describe("handleSourceMouseDown", () => {
   });
 
   it("suppresses source links on middle-button mousedown", () => {
-    const sourceFile = makeFile("reading.md");
+    const sourceFile = makeFile("test-source.md");
     const app = makeApp({
       files: [sourceFile],
       headingEntries: [[sourceFile, [heading("Target Heading", 4)]]]
@@ -628,7 +628,7 @@ describe("handleSourceMouseDown", () => {
   });
 
   it("navigates live preview rendered source-fallback clicks in the same leaf", () => {
-    const sourceFile = makeFile("reading.md");
+    const sourceFile = makeFile("test-source.md");
     const app = makeApp({
       files: [sourceFile],
       headingEntries: [[sourceFile, [heading("Target Heading", 4)]]]
@@ -677,7 +677,7 @@ describe("handleSourceMouseDown", () => {
   });
 
   it("tracks live preview unrendered ctrl-clicks on mousedown without navigating", () => {
-    const sourceFile = makeFile("reading.md");
+    const sourceFile = makeFile("test-source.md");
     const app = makeApp({
       files: [sourceFile],
       headingEntries: [[sourceFile, [heading("Target Heading", 4)]]]
@@ -714,7 +714,7 @@ describe("handleSourceMouseDown", () => {
   });
 
   it("stops immediate propagation for handled source links", () => {
-    const sourceFile = makeFile("reading.md");
+    const sourceFile = makeFile("test-source.md");
     const app = makeApp({
       files: [sourceFile],
       headingEntries: [[sourceFile, [heading("Target Heading", 4)]]]
@@ -755,7 +755,7 @@ describe("handleSourceMouseDown", () => {
   });
 
   it("suppresses source auxclick without navigating again", () => {
-    const sourceFile = makeFile("reading.md");
+    const sourceFile = makeFile("test-source.md");
     const app = makeApp({
       files: [sourceFile],
       headingEntries: [[sourceFile, [heading("Target Heading", 4)]]]
@@ -796,7 +796,7 @@ describe("handleSourceMouseDown", () => {
   });
 
   it("suppresses source links on middle-button mouseup without choosing a release target", () => {
-    const sourceFile = makeFile("reading.md");
+    const sourceFile = makeFile("test-source.md");
     const event = new MouseEvent("mouseup", { button: 1 });
     const navigations: unknown[] = [];
     const previousLeaf = {} as WorkspaceLeaf;
@@ -870,7 +870,7 @@ describe("handleSourceMouseDown", () => {
   });
 
   it("navigates source ctrl-click mouseup in the same leaf", () => {
-    const sourceFile = makeFile("reading.md");
+    const sourceFile = makeFile("test-source.md");
     const event = new MouseEvent("mouseup", { button: 0, ctrlKey: true });
     const previousLeaf = {} as WorkspaceLeaf;
     const navigations: unknown[] = [];
@@ -907,7 +907,7 @@ describe("handleSourceMouseDown", () => {
   });
 
   it("navigates live preview source ctrl-click mouseup in a new leaf", () => {
-    const sourceFile = makeFile("reading.md");
+    const sourceFile = makeFile("test-source.md");
     const event = new MouseEvent("mouseup", { button: 0, ctrlKey: true });
     const previousLeaf = {} as WorkspaceLeaf;
     const navigations: unknown[] = [];

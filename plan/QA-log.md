@@ -35,35 +35,36 @@ Current status after native-parity reset:
 
 ## Reading Mode
 
-- [x] RED: clicking `[same-file](#target-heading)` in `reading.md` should scroll to `## Target Heading`; before reading-mode handler wiring, observed no plugin-handled scroll.
-- [x] GREEN: clicking `[same-file](#target-heading)` in `reading.md` scrolls to `## Target Heading`.
-- [x] RED: clicking `[cross-file](Other.md#target-heading)` in `reading.md` should open `Other.md` and scroll to `## Target Heading`; current observed behavior opened `Other.md` without scrolling.
-- [x] GREEN: clicking `[cross-file](Other.md#target-heading)` in `reading.md` opens `Other.md` and scrolls to `## Target Heading`.
-- [x] GREEN: clicking `[external](https://example.com)` in `reading.md` is not intercepted by the plugin; observed browser opens.
-- [x] GREEN: clicking `[[Wikilink]]` in `reading.md` is not intercepted by the plugin; observed native navigation to `Wikilink`.
-- [x] GREEN: clicking `#reading-test-tag` in `reading.md` is not intercepted by the plugin; observed native search with `tag:#reading-test-tag`.
+- [x] RED: clicking `[same-file](#target-heading)` in ~~`reading.md`~~ `test-gfm.md` should scroll to `## Target Heading`; before reading-mode handler wiring, observed no plugin-handled scroll.
+- [x] GREEN: clicking `[same top](#target-heading)` in `test-gfm.md` scrolls to `## Target Heading`.
+- [x] RED: clicking `[cross-file](Other.md#target-heading)` in ~~`reading.md`~~ `test-gfm.md` should open `Other.md` and scroll to `## Target Heading`; current observed behavior opened `Other.md` without scrolling.
+- [x] GREEN: clicking `[cross-file](Other.md#target-heading)` in `test-gfm.md` opens `Other.md` and scrolls to `## Target Heading`.
+- [x] GREEN: external scheme rows in `test-gfm.md` / `test-native.md` are not intercepted by the plugin; observed native external behavior.
+- [x] GREEN: clicking `[[Wikilink Target]]` in `test-gfm.md` / `test-native.md` is not intercepted by the plugin; observed native navigation to `Wikilink Target`.
+- [x] GREEN: clicking `#reading-test-tag` in `test-gfm.md` / `test-native.md` is not intercepted by the plugin; observed native search with `tag:#reading-test-tag`.
 
 ## Live Preview
 
-- [x] RED: clicking `[same-file-2](#another-heading)` in `reading.md` should scroll to `## Another Heading`; before editor extension source fallback wiring, observed no plugin-handled scroll.
-- [x] GREEN: clicking `[same-file-2](#another-heading)` in Live Preview scrolls to `## Another Heading`.
+- [x] RED: clicking `[same-file-2](#another-heading)` in ~~`reading.md`~~ `test-gfm.md` should scroll to `## Another Heading`; before editor extension source fallback wiring, observed no plugin-handled scroll.
+- [x] GREEN: clicking `[same later](#another-heading)` in Live Preview scrolls to `## Another Heading`.
 - [x] GREEN: clicking `[cross-file](Other.md#target-heading)` in Live Preview opens `Other.md` and scrolls to `## Target Heading`.
-- [x] GREEN: clicking `[external](https://example.com)` in Live Preview is not intercepted by the plugin; observed browser opens.
-- [x] GREEN: clicking `[[Wikilink]]` in Live Preview is not intercepted by the plugin; observed native navigation to `Wikilink`.
+- [x] GREEN: external scheme rows in Live Preview are not intercepted by the plugin; observed native external behavior.
+- [x] GREEN: clicking `[[Wikilink Target]]` in Live Preview is not intercepted by the plugin; observed native navigation to `Wikilink Target`.
 - [x] GREEN: clicking `#reading-test-tag` in Live Preview is not intercepted by the plugin; observed native tag behavior.
 
 ## Source Mode
 
-- [x] GREEN: Ctrl-clicking `[same-file-2](#another-heading)` in Source mode scrolls to `## Another Heading`.
-- [x] GREEN: middle-clicking `[same-file-2](#another-heading)` in Source mode opens one Live Preview tab and highlights heading with children; observed slight highlight latency.
+- [x] GREEN: Ctrl-clicking `[same later](#another-heading)` in Source mode scrolls to `## Another Heading`.
+- [x] GREEN: middle-clicking `[same later](#another-heading)` in Source mode opens one Live Preview tab and highlights heading with children; observed slight highlight latency.
 
 ## Step 7 Edge Cases
 
 ### Formatted Headings
 
-- [x] GREEN: clicking `[bold](#bold-heading)` in `headings-formatted.md` scrolls to `## **Bold Heading**`.
-- [x] GREEN: clicking `[italic](#italic-heading)` in `headings-formatted.md` scrolls to `## *Italic Heading*`.
-- [x] GREEN: clicking `[code](#code-heading)` in `headings-formatted.md` scrolls to ``## `code()` Heading``.
+- [x] GREEN: clicking `[bold](#bold-heading)` in ~~`headings-formatted.md`~~ `test-gfm.md` scrolls to `## **Bold Heading**`.
+- [x] GREEN: clicking `[italic](#italic-heading)` in ~~`headings-formatted.md`~~ `test-gfm.md` scrolls to `## *Italic Heading*`.
+- [x] GREEN: clicking `[code](#code-heading)` in ~~`headings-formatted.md`~~ `test-gfm.md` scrolls to ``## `code()` Heading``.
+- [x] GREEN: `test-native.md` carries the paired native Obsidian heading fragments for the same bold, italic, and code headings.
 
 ### Duplicate Headings
 
@@ -136,9 +137,9 @@ Manual QA in `callout.md`:
 
 ### Empty Fragments And Native Links
 
-- [x] GREEN: `[empty fragment](empty-fragment.md#)` in `empty-fragment.md` matches native empty-fragment behavior with no scroll.
+- [x] GREEN: `[empty fragment](test-gfm.md#)` / `[empty fragment](test-native.md#)` in the paired `test-gfm.md` / `test-native.md` fixtures matches native empty-fragment behavior with no scroll.
 
-Manual QA in `empty-fragment.md`:
+Manual QA originally recorded in `empty-fragment.md`; the fixture row is now consolidated into `test-gfm.md` and `test-native.md` for side-by-side parity checks:
 
 | Mode | Link state | Gesture | Native behavior | Plugin behavior | Status |
 |---|---|---|---|---|---|
@@ -163,6 +164,8 @@ Manual parity fixtures:
 
 - `test-gfm.md` uses GFM slug fragments such as `[same later](#another-heading)`.
 - `test-native.md` uses native Obsidian fragments such as `[same later](#Another%20Heading)`.
+- Both fixtures include cross-file links to `Other.md`, wikilink and tag non-interception rows, formatted heading links, empty-fragment links, and external scheme links for side-by-side QA.
+- The external scheme rows cover `https://`, `http://`, `mailto:`, `tel:`, `obsidian://`, `file:`, protocol-relative `//example.com`, and `data:`.
 - Native Markdown heading fragments must remain native-handled; the plugin should only handle GFM slug fragments that native Obsidian does not already resolve.
 - Both fixtures intentionally cover a top heading and a later non-duplicate heading. Duplicate heading parity is intentionally left to `duplicates.md` and future work because native Obsidian duplicate-heading behavior relies on `^` block identifiers rather than GFM slug suffixes.
 
@@ -175,14 +178,27 @@ Manual QA in `test-gfm.md` and `test-native.md`:
 | Live Preview | unrendered GFM and native heading links | click / Ctrl-click / middle-click | GFM links match native fixture behavior; native links remain native-handled. Middle-click has a slight highlight delay. | GREEN |
 | Source mode | unrendered GFM and native heading links | click / Ctrl-click / middle-click | GFM links match native fixture behavior; native links remain native-handled. Middle-click has a slight highlight delay. | GREEN |
 
-- [ ] RED: clicking external links in `external.md` should use native external behavior and should not be intercepted.
+Manual QA for external scheme rows in `test-gfm.md` and `test-native.md`:
+
+| Scheme | Modes | Gestures | Observed behavior | Status |
+|---|---|---|---|---|
+| `https://` | Reading, Live Preview rendered, Live Preview unrendered, Source mode | click / Ctrl-click / middle-click | Appears to use native external behavior; no plugin navigation observed. | GREEN |
+| `http://` | Reading, Live Preview rendered, Live Preview unrendered, Source mode | click / Ctrl-click / middle-click | Appears to use native external behavior; no plugin navigation observed. | GREEN |
+| `mailto:` | Reading, Live Preview rendered, Live Preview unrendered, Source mode | click / Ctrl-click / middle-click | Appears to use native external behavior; no plugin navigation observed. Host handler behavior is platform/app dependent. | GREEN |
+| `tel:` | Reading, Live Preview rendered, Live Preview unrendered, Source mode | click / Ctrl-click / middle-click | Appears to use native external behavior; no plugin navigation observed. Host handler behavior is platform/app dependent. | GREEN |
+| `obsidian://` | Reading, Live Preview rendered, Live Preview unrendered, Source mode | click / Ctrl-click / middle-click | Appears to use native external behavior; no plugin navigation observed. | GREEN |
+| `file:` | Reading, Live Preview rendered, Live Preview unrendered, Source mode | click / Ctrl-click / middle-click | Appears to use native external behavior; no plugin navigation observed. Host file handling is platform/security dependent. | GREEN |
+| `//example.com/path` | Reading, Live Preview rendered, Live Preview unrendered, Source mode | click / Ctrl-click / middle-click | Appears to use native external behavior; no plugin navigation observed. | GREEN |
+| `data:` | Reading, Live Preview rendered, Live Preview unrendered, Source mode | click / Ctrl-click / middle-click | Appears to use native external behavior; no plugin navigation observed. Host handler behavior is platform/app dependent. | GREEN |
+
 - [ ] RED: clicking wikilinks or embeds in `wikilinks.md` should use native Obsidian behavior and should not be intercepted.
+  - Fixture targets exist for manual QA: `Wikilink Target.md` and `Embedded Note.md`, each with body content and a child heading.
 
 ## Follow-Up Items
 
 - Hover previews for same-file and cross-file GFM fragment links still use Obsidian's native preview path and can show unresolved fragment text, e.g. unable to find `"target-heading"`.
-- Live Preview unrendered Ctrl-click now acts on mouse release for `empty-fragment.md`; recheck the callout fixture before removing this as a broader follow-up.
+- Live Preview unrendered Ctrl-click now acts on mouse release for the consolidated empty-fragment rows; recheck the callout fixture before removing this as a broader follow-up.
 - Live Preview unrendered and Source mode middle-click show a notable visual flash in the new tab in the callout fixture, briefly appearing rendered, unrendered, then rendered. This has only been observed in `callout.md` so far. Treat this as a likely code/event-order bug, not just cosmetic polish.
-- Source mode Ctrl-click now acts on mouse release for `empty-fragment.md`; recheck the callout fixture before removing this as a broader follow-up.
+- Source mode Ctrl-click now acts on mouse release for the consolidated empty-fragment rows; recheck the callout fixture before removing this as a broader follow-up.
 - Live Preview unrendered and Source mode middle-click have a slight delay before the new tab highlights the target heading plus children. Accepted for MVP, but treat this as a likely event-order or retargeting timing issue.
 - Context-menu "Open in new tab" and "Open to the right" on GFM fragment links open the target file but do not navigate to or highlight the target heading. Observed on a rendered Live Preview link; scope across modes and fixtures not yet verified.

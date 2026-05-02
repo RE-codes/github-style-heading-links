@@ -1,6 +1,23 @@
 [same top](#Target%20Heading)
 [same later](#Another%20Heading)
 [slug-shaped native](#foo-bar)
+[cross-file](Other.md#Target%20Heading)
+[empty fragment](test-native.md#)
+[bold](#Bold%20Heading)
+[italic](#Italic%20Heading)
+[code](#code%28%29%20Heading)
+
+[[Wikilink Target]]
+#reading-test-tag
+
+[external https](https://example.com)
+[external http](http://example.com)
+[external mailto](mailto:test@example.com)
+[external tel](tel:+15555550123)
+[external obsidian uri](obsidian://open?vault=Test&file=Note)
+[external file](file:///C:/Temp/test.txt)
+[external protocol relative](//example.com/path)
+[external data](data:text/plain,hello)
 
 ## Target Heading
 
@@ -25,3 +42,15 @@ Native slug-shaped target body.
 ### foo-bar child
 
 Native slug-shaped child body.
+
+## **Bold Heading**
+
+Bold formatted heading body.
+
+## *Italic Heading*
+
+Italic formatted heading body.
+
+## `code()` Heading
+
+Code formatted heading body.

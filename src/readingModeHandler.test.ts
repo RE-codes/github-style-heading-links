@@ -62,7 +62,7 @@ describe("decideAction", () => {
 
 describe("handleReadingAnchorEvent", () => {
   it("does not intercept slug-shaped fragments that match native headings exactly", () => {
-    const sourceFile = makeFile("reading.md");
+    const sourceFile = makeFile("test-source.md");
     const app = makeApp({
       files: [sourceFile],
       headingEntries: [[sourceFile, [heading("foo-bar", 4)]]]
@@ -96,7 +96,7 @@ describe("handleReadingAnchorEvent", () => {
   });
 
   it("navigates middle-clicks in a new leaf", () => {
-    const sourceFile = makeFile("reading.md");
+    const sourceFile = makeFile("test-source.md");
     const app = makeApp({
       files: [sourceFile],
       headingEntries: [[sourceFile, [heading("Target Heading", 4)]]]
@@ -128,7 +128,7 @@ describe("handleReadingAnchorEvent", () => {
 
 describe("createReadingModeHandler", () => {
   it("does not attach duplicate listeners to the same anchor", () => {
-    const sourceFile = makeFile("reading.md");
+    const sourceFile = makeFile("test-source.md");
     const app = makeApp({
       files: [sourceFile],
       headingEntries: [[sourceFile, [heading("Target Heading", 4)]]]
