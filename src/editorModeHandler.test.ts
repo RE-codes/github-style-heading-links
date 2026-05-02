@@ -253,7 +253,7 @@ describe("handleRenderedAnchorMouseDown", () => {
     });
   });
 
-  it("navigates rendered anchor links", () => {
+  it("tracks rendered anchor links on left-button mousedown without navigating", () => {
     const sourceFile = makeFile("reading.md");
     const app = makeApp({
       files: [sourceFile],
@@ -276,21 +276,10 @@ describe("handleRenderedAnchorMouseDown", () => {
       }
     );
 
-    expect(navigations).toEqual([
-      {
-        target: {
-          file: sourceFile,
-          line: 4,
-          heading: "Target Heading",
-          requiresLineFallback: false
-        },
-        newLeaf: false,
-        options: { fallbackToLine: false }
-      }
-    ]);
+    expect(navigations).toEqual([]);
   });
 
-  it("navigates rendered data-href elements", () => {
+  it("tracks rendered data-href elements on left-button mousedown without navigating", () => {
     const sourceFile = makeFile("reading.md");
     const app = makeApp({
       files: [sourceFile],
@@ -313,18 +302,7 @@ describe("handleRenderedAnchorMouseDown", () => {
       }
     );
 
-    expect(navigations).toEqual([
-      {
-        target: {
-          file: sourceFile,
-          line: 4,
-          heading: "Target Heading",
-          requiresLineFallback: false
-        },
-        newLeaf: false,
-        options: { fallbackToLine: false }
-      }
-    ]);
+    expect(navigations).toEqual([]);
   });
 
   it("tracks rendered links on middle-button mousedown", () => {
@@ -521,7 +499,53 @@ describe("handleSourceMouseDown", () => {
     expect(navigations).toEqual([]);
   });
 
-  it("navigates source links on ctrl-click", () => {
+  it("does not intercept native heading fragments in source links", () => {
+    const sourceFile = makeFile("reading.md");
+    const app = makeApp({
+      files: [sourceFile],
+      headingEntries: [[sourceFile, [heading("Another Heading", 4)]]]
+    });
+    const resolver = new LinkResolver(app as unknown as App);
+    const target = document.createElement("span");
+    const event = new MouseEvent("mousedown", { button: 0, ctrlKey: true });
+    const navigations: unknown[] = [];
+    let stoppedImmediately = false;
+    const view = {
+      posAtDOM: () => 1,
+      state: {
+        doc: {
+          lineAt: () => ({
+            from: 0,
+            text: "[same later](#Another%20Heading)"
+          })
+        }
+      }
+    } as unknown as EditorView;
+
+    event.stopImmediatePropagation = () => {
+      stoppedImmediately = true;
+    };
+
+    const resolvedTarget = handleSourceMouseDown(
+      target,
+      event,
+      view,
+      resolver,
+      sourceFile.path,
+      false,
+      (resolvedTarget, newLeaf) => {
+        navigations.push({ target: resolvedTarget, newLeaf });
+      }
+    );
+
+    expect({ resolvedTarget, stoppedImmediately, navigations }).toEqual({
+      resolvedTarget: null,
+      stoppedImmediately: false,
+      navigations: []
+    });
+  });
+
+  it("tracks source links on ctrl-click mousedown without navigating", () => {
     const sourceFile = makeFile("reading.md");
     const app = makeApp({
       files: [sourceFile],
@@ -555,18 +579,7 @@ describe("handleSourceMouseDown", () => {
       }
     );
 
-    expect(navigations).toEqual([
-      {
-        target: {
-          file: sourceFile,
-          line: 4,
-          heading: "Target Heading",
-          requiresLineFallback: false
-        },
-        newLeaf: false,
-        options: { fallbackToLine: false }
-      }
-    ]);
+    expect(navigations).toEqual([]);
   });
 
   it("suppresses source links on middle-button mousedown", () => {
@@ -663,7 +676,7 @@ describe("handleSourceMouseDown", () => {
     ]);
   });
 
-  it("navigates live preview unrendered ctrl-clicks in a new leaf", () => {
+  it("tracks live preview unrendered ctrl-clicks on mousedown without navigating", () => {
     const sourceFile = makeFile("reading.md");
     const app = makeApp({
       files: [sourceFile],
@@ -697,17 +710,7 @@ describe("handleSourceMouseDown", () => {
       }
     );
 
-    expect(navigations).toEqual([
-      {
-        target: {
-          file: sourceFile,
-          line: 4,
-          heading: "Target Heading",
-          requiresLineFallback: false
-        },
-        newLeaf: true
-      }
-    ]);
+    expect(navigations).toEqual([]);
   });
 
   it("stops immediate propagation for handled source links", () => {

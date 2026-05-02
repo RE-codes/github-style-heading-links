@@ -149,6 +149,35 @@ describe("LinkResolver", () => {
     });
   });
 
+  it("does not require line fallback for a later non-duplicate heading", () => {
+    const app = makeApp({
+      files: [sourceFile],
+      headingEntries: [
+        [sourceFile, [heading("Target Heading", 3), heading("Another Heading", 8)]]
+      ]
+    });
+
+    const resolver = new LinkResolver(app as unknown as App);
+
+    expect(
+      resolver.resolve(
+        {
+          raw: "#another-heading",
+          pathPart: "",
+          fragment: "another-heading",
+          isExternal: false,
+          isAnchorOnly: true
+        },
+        sourceFile.path
+      )
+    ).toEqual({
+      file: sourceFile,
+      line: 8,
+      heading: "Another Heading",
+      requiresLineFallback: false
+    });
+  });
+
   it("resolves duplicate headings by matching the collision suffix", () => {
     const app = makeApp({
       files: [sourceFile],

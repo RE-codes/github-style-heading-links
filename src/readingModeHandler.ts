@@ -1,6 +1,7 @@
 import { parseHref } from "./linkParser";
 import type { App, MarkdownPostProcessorContext } from "obsidian";
 import { LinkResolver, type ResolvedTarget } from "./resolver";
+import { slugify } from "./slug";
 
 export type Action =
   | { kind: "ignore" }
@@ -16,13 +17,32 @@ export function decideAction(anchor: Element): Action {
     return { kind: "ignore" };
   }
 
-  const parsed = parseHref(href);
-
-  if (parsed.isExternal) {
+  if (!shouldHandleHref(href)) {
     return { kind: "ignore" };
   }
 
   return { kind: "resolve", href };
+}
+
+export function shouldHandleHref(href: string): boolean {
+  const parsed = parseHref(href);
+
+  if (parsed.isExternal) {
+    return false;
+  }
+
+  return parsed.fragment === null || parsed.fragment === slugify(parsed.fragment);
+}
+
+export function shouldHandleResolvedTarget(
+  href: string,
+  target: ResolvedTarget
+): boolean {
+  const parsed = parseHref(href);
+
+  // Exact native heading matches should stay native, even if the fragment is
+  // already slug-shaped. The plugin only fills gaps native Obsidian misses.
+  return parsed.fragment === null || target.heading !== parsed.fragment;
 }
 
 export function createReadingModeHandler(
@@ -81,6 +101,9 @@ export function handleReadingAnchorEvent(
 
   const target = resolver.resolve(parseHref(action.href), sourcePath);
   if (target === null) {
+    return false;
+  }
+  if (!shouldHandleResolvedTarget(action.href, target)) {
     return false;
   }
 

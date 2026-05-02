@@ -10,12 +10,17 @@ import {
 
 import { parseHref } from "./linkParser";
 import type { NavigateOptions } from "./navigation";
-import { decideAction } from "./readingModeHandler";
+import {
+  decideAction,
+  shouldHandleHref,
+  shouldHandleResolvedTarget
+} from "./readingModeHandler";
 import { LinkResolver, type ResolvedTarget } from "./resolver";
 
 type PendingClick = {
   previousLeaf: WorkspaceLeaf | null;
   target: ResolvedTarget;
+  newLeaf?: boolean;
 };
 
 type NavigateCallback = (
@@ -97,6 +102,17 @@ export function createEditorExtension(
             isLivePreview,
             onNavigate
           );
+          if (
+            event.button === 0 &&
+            (event.ctrlKey || event.metaKey) &&
+            resolvedTarget !== null
+          ) {
+            this.pendingRenderedClick = {
+              previousLeaf: app.workspace.activeLeaf,
+              target: resolvedTarget,
+              newLeaf: isLivePreview
+            };
+          }
           if (event.button === 1 && resolvedTarget !== null) {
             this.pendingMiddleClick = {
               previousLeaf: app.workspace.activeLeaf,
@@ -282,9 +298,15 @@ export function handleSourceMouseDown(
     if (href === null) {
       return null;
     }
+    if (!shouldHandleHref(href)) {
+      return null;
+    }
 
     const targetFile = resolver.resolve(parseHref(href), sourcePath);
     if (targetFile === null) {
+      return null;
+    }
+    if (!shouldHandleResolvedTarget(href, targetFile)) {
       return null;
     }
 
@@ -306,20 +328,28 @@ export function handleSourceMouseDown(
   if (href === null) {
     return null;
   }
+  if (!shouldHandleHref(href)) {
+    return null;
+  }
 
   const targetFile = resolver.resolve(parseHref(href), sourcePath);
   if (targetFile === null) {
+    return null;
+  }
+  if (!shouldHandleResolvedTarget(href, targetFile)) {
     return null;
   }
 
   event.preventDefault();
   event.stopPropagation();
   event.stopImmediatePropagation();
-  onNavigate(
-    targetFile,
-    isLivePreview && (event.ctrlKey || event.metaKey),
-    getEditorNavigateOptions(targetFile)
-  );
+  if (!(event.ctrlKey || event.metaKey)) {
+    onNavigate(
+      targetFile,
+      false,
+      getEditorNavigateOptions(targetFile)
+    );
+  }
 
   return targetFile;
 }
@@ -367,12 +397,8 @@ export function handleRenderedAnchorMouseDown(
   if (target === null) {
     return null;
   }
-
-  if (event.button === 0) {
-    onNavigate(target, event.ctrlKey || event.metaKey, getEditorNavigateOptions(target));
-    event.preventDefault();
-    event.stopPropagation();
-    event.stopImmediatePropagation();
+  if (!shouldHandleResolvedTarget(action.href, target)) {
+    return null;
   }
 
   return target;
@@ -395,6 +421,9 @@ export function handleRenderedAnchorPointerDown(
 
   const target = resolver.resolve(parseHref(action.href), sourcePath);
   if (target === null) {
+    return null;
+  }
+  if (!shouldHandleResolvedTarget(action.href, target)) {
     return null;
   }
 
@@ -423,9 +452,15 @@ export function handleSourceAuxClick(
   if (href === null) {
     return;
   }
+  if (!shouldHandleHref(href)) {
+    return;
+  }
 
   const targetFile = resolver.resolve(parseHref(href), sourcePath);
   if (targetFile === null) {
+    return;
+  }
+  if (!shouldHandleResolvedTarget(href, targetFile)) {
     return;
   }
 
@@ -533,7 +568,7 @@ export function handleUnanchoredMouseUp(
   if (event.button === 0 && onNavigate !== undefined) {
     onNavigate(
       pendingClick.target,
-      event.ctrlKey || event.metaKey,
+      pendingClick.newLeaf ?? (event.ctrlKey || event.metaKey),
       getEditorNavigateOptions(pendingClick.target)
     );
   }
