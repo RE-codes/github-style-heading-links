@@ -1,6 +1,23 @@
 [same top](#target-heading)
 [same later](#another-heading)
 [slug-shaped gfm](#foo-bar)
+[cross-file](Other.md#target-heading)
+[empty fragment](test-gfm.md#)
+[bold](#bold-heading)
+[italic](#italic-heading)
+[code](#code-heading)
+
+[[Wikilink Target]]
+#reading-test-tag
+
+[external https](https://example.com)
+[external http](http://example.com)
+[external mailto](mailto:test@example.com)
+[external tel](tel:+15555550123)
+[external obsidian uri](obsidian://open?vault=Test&file=Note)
+[external file](file:///C:/Temp/test.txt)
+[external protocol relative](//example.com/path)
+[external data](data:text/plain,hello)
 
 ## Target Heading
 
@@ -25,3 +42,15 @@ GFM slug-shaped target body.
 ### Foo Bar Child
 
 GFM slug-shaped child body.
+
+## **Bold Heading**
+
+Bold formatted heading body.
+
+## *Italic Heading*
+
+Italic formatted heading body.
+
+## `code()` Heading
+
+Code formatted heading body.

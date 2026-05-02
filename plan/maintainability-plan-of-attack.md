@@ -117,8 +117,8 @@ Files likely touched:
 
 Work items:
 
-1. Verify `[empty fragment](empty-fragment.md#)` in all relevant modes.
-2. Verify external links in `external.md` in all relevant modes.
+1. ~~Verify `[empty fragment](empty-fragment.md#)` in all relevant modes.~~
+2. ~~Verify external scheme rows in `test-gfm.md` and `test-native.md` in all relevant modes.~~
 3. Verify wikilinks and embeds in `wikilinks.md` in all relevant modes.
 4. Mark each row GREEN or document the exact failure.
 5. If a row fails, add the narrowest unit test before changing runtime code.
@@ -150,7 +150,8 @@ Files likely touched:
 
 Work items:
 
-1. Add fixture rows for P1 gaps: file-only links, missing files, existing file with missing heading, empty fragments, external schemes, wikilinks, and embeds.
+1. Add fixture rows for P1 gaps: file-only links, missing files, existing file with missing heading, ~~empty fragments~~, ~~external schemes~~, wikilinks, and embeds.
+   - Wikilink/embed target files now exist for manual QA: `Wikilink Target.md` and `Embedded Note.md`.
 2. Add fixture rows and slug tests for P2a heading targets: closing hashes, setext headings, square brackets, parentheses, escaped punctuation, links, images, HTML/entities, strikethrough, non-ASCII text, and emoji.
 3. Add fixture rows for P2a containers: lists, task lists, and blockquotes.
 4. Add placeholder fixture rows for P2b source parser cases, but do not implement parser behavior in the monolith.

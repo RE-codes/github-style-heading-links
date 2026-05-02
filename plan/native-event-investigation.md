@@ -57,13 +57,11 @@ Unknown:
 
 Use the existing fixtures first:
 
-- `reading.md`
 - `Other.md`
 - `duplicates.md`
 - `callout.md`
 - `table.md`
-- `empty-fragment.md`
-- `external.md`
+- `test-gfm.md` / `test-native.md` paired heading, cross-file, wikilink, tag, formatted heading, empty fragment, and external scheme rows
 - `wikilinks.md`
 
 Add investigation-only fixture rows if needed:
