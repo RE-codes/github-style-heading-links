@@ -191,8 +191,16 @@ Manual QA for external scheme rows in `test-gfm.md` and `test-native.md`:
 | `//example.com/path` | Reading, Live Preview rendered, Live Preview unrendered, Source mode | click / Ctrl-click / middle-click | Appears to use native external behavior; no plugin navigation observed. | GREEN |
 | `data:` | Reading, Live Preview rendered, Live Preview unrendered, Source mode | click / Ctrl-click / middle-click | Appears to use native external behavior; no plugin navigation observed. Host handler behavior is platform/app dependent. | GREEN |
 
-- [ ] RED: clicking wikilinks or embeds in `wikilinks.md` should use native Obsidian behavior and should not be intercepted.
-  - Fixture targets exist for manual QA: `Wikilink Target.md` and `Embedded Note.md`, each with body content and a child heading.
+- [x] GREEN: wikilinks and embeds in `wikilinks.md` use native Obsidian behavior and are not intercepted by the plugin.
+
+Manual QA in `wikilinks.md`:
+
+| Form | Reading | Live Preview rendered | Live Preview unrendered | Source mode | Status |
+|---|---|---|---|---|---|
+| `[[Wikilink Target]]` | Native behavior for click, Ctrl-click, and middle-click. | Native behavior for click, Ctrl-click, and middle-click. | Native behavior for click, Ctrl-click, and middle-click. | Native behavior for click, Ctrl-click, and middle-click. | GREEN |
+| `[[Wikilink Target#Heading]]` | Native behavior for click, Ctrl-click, and middle-click. | Native behavior for click, Ctrl-click, and middle-click. | Native behavior for click, Ctrl-click, and middle-click. | Native behavior for click, Ctrl-click, and middle-click. | GREEN |
+| `![[Embedded Note]]` | Native embed behavior for click, Ctrl-click, and middle-click. | Native embed behavior for click, Ctrl-click, and middle-click. | Native embed behavior for click, Ctrl-click, and middle-click. | Native embed behavior for click, Ctrl-click, and middle-click. | GREEN |
+| `![[image.png]]` | Native image embed/viewer behavior for click, Ctrl-click, and middle-click. | Native image embed/viewer behavior for click, Ctrl-click, and middle-click. | Native image embed/viewer behavior for click, Ctrl-click, and middle-click. | Native image embed/viewer behavior for click, Ctrl-click, and middle-click. | GREEN |
 
 ## Follow-Up Items
 
