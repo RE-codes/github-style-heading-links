@@ -100,7 +100,7 @@ P4 items are lower-priority public-release polish or documentation:
 | P1 | Existing file, missing heading | Planned matrix | Open file, no scroll. | Not consolidated in QA log. | Unknown | Resolver supports this; manual QA status unclear. |
 | P1 | Empty fragment, e.g. `[x](file.md#)` | Reading, Live Preview, Source | Match native empty-fragment behavior with no scroll or visible error. | Works in recorded QA; fixture row is now consolidated into `test-gfm.md` / `test-native.md`. Ctrl-click release timing was fixed for rendered Live Preview, unrendered Live Preview, and Source mode. | GREEN | Hover-preview parity remains out of scope. |
 | P1 | External schemes: `http`, `https`, `mailto`, `tel`, `obsidian`, `file`, protocol-relative `//example.com`, `data` | Reading, Live Preview rendered, Live Preview unrendered, Source | Native external behavior; plugin must not intercept. | In `test-gfm.md` and `test-native.md`, all listed schemes appear to use native external behavior for click, Ctrl/Cmd-click, and middle-click; no plugin navigation observed. Platform/app-specific handlers vary for `mailto:`, `tel:`, `file:`, and `data:`. | GREEN | Manual QA on Windows desktop Obsidian via dev vault; macOS/Linux validation deferred to real-world testing. |
-| P1 | Wikilinks and embeds, e.g. `[[Note]]`, `[[Note#Heading]]`, `![[Note]]`, `![[image.png]]` | Reading, Live Preview for wikilink | Native Obsidian behavior; plugin must not intercept. | Reading and Live Preview observed native wikilink navigation. Dedicated `wikilinks.md` row remains unchecked; fixture targets exist for `[[Wikilink Target]]`, `[[Wikilink Target#Heading]]`, and `![[Embedded Note]]`. | Partial | Embeds need explicit verification. |
+| P1 | Wikilinks and embeds, e.g. `[[Note]]`, `[[Note#Heading]]`, `![[Note]]`, `![[image.png]]` | Reading, Live Preview rendered, Live Preview unrendered, Source | Native Obsidian behavior; plugin must not intercept. | `wikilinks.md` verifies native behavior for `[[Wikilink Target]]`, `[[Wikilink Target#Heading]]`, `![[Embedded Note]]`, and `![[image.png]]` across click, Ctrl/Cmd-click, and middle-click. | GREEN | Verified for Issue #11. |
 | P1 | Tag link, e.g. `#reading-test-tag` | Reading, Live Preview | Native tag behavior. | Observed native tag behavior; fixture row consolidated into `test-gfm.md` / `test-native.md`. | GREEN | Source mode tag behavior not relevant to markdown link handler. |
 | P1 | Encoded path, e.g. `[x](encoded%20path%20with%20spaces.md#h)` | Current file QA | Decode path and navigate to heading. | Works. | GREEN | Recorded in `encoded path with spaces.md`. |
 | P2b | Inline link with title, e.g. `[x](Other.md#h "title")` | Not verified | Extract destination only and ignore title. | Current source regex likely mishandles this. | Unknown | Legal Markdown; implement after `linkExtraction.ts` extraction. |
@@ -205,7 +205,7 @@ The following rows are not complete enough to rely on:
 
 1. ~~Empty fragment behavior across modes.~~ Closed by recorded QA; fixture rows consolidated into `test-gfm.md` / `test-native.md`.
 2. ~~External scheme rows in `test-gfm.md` and `test-native.md` across modes.~~ Closed by recorded QA for Issue #10.
-3. Wikilink/embed fixture across modes.
+3. ~~Wikilink/embed fixture across modes.~~ Closed by recorded QA in `wikilinks.md`.
 4. Source-mode cross-file GFM fragment behavior.
 5. File-only link behavior.
 6. Missing file and missing heading behavior.
