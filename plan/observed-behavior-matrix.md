@@ -95,7 +95,7 @@ P4 items are lower-priority public-release polish or documentation:
 |---|---|---|---|---|---|---|
 | P1 | Same-file GFM fragment, e.g. `[x](#target-heading)` | Reading, Live Preview, Source | Navigate to matching GFM slug heading without intercepting native Markdown heading fragments. | Works in recorded QA, including paired `test-gfm.md` / `test-native.md` fixtures. | GREEN | Exact native heading matches remain native-handled, even when slug-shaped. |
 | P1 | Cross-file GFM fragment, e.g. `[x](Other.md#target-heading)` | Reading, Live Preview | Open target file and navigate to matching heading. | Works in recorded QA; fixture row consolidated into `test-gfm.md` / `test-native.md` with `Other.md` as target. | GREEN | Source mode cross-file not comprehensively logged. |
-| P1 | File-only link, e.g. `[x](Other.md)` | Planned matrix | Native file open. | Not consolidated in QA log. | Unknown | Should be included in final QA matrix. |
+| P1 | File-only link, e.g. `[x](Other.md)` | Reading, Live Preview rendered, Live Preview unrendered, Source | Native file open with native tab/cursor behavior and no plugin-imposed scroll target. | In `test-gfm.md` and `test-native.md`, plugin-on behavior matches plugin-off native behavior for click, Ctrl/Cmd-click, and middle-click after file-only links were handed back to Obsidian's native handler. | GREEN | Manual QA on Windows desktop Obsidian; macOS Cmd-click parity is inferred and deferred to future platform testing. |
 | P1 | Missing file | Planned matrix | Native miss behavior. | Not consolidated in QA log. | Unknown | Important non-disruption check. |
 | P1 | Existing file, missing heading | Planned matrix | Open file, no scroll. | Not consolidated in QA log. | Unknown | Resolver supports this; manual QA status unclear. |
 | P1 | Empty fragment, e.g. `[x](file.md#)` | Reading, Live Preview, Source | Match native empty-fragment behavior with no scroll or visible error. | Works in recorded QA; fixture row is now consolidated into `test-gfm.md` / `test-native.md`. Ctrl-click release timing was fixed for rendered Live Preview, unrendered Live Preview, and Source mode. | GREEN | Hover-preview parity remains out of scope. |
@@ -207,7 +207,7 @@ The following rows are not complete enough to rely on:
 2. ~~External scheme rows in `test-gfm.md` and `test-native.md` across modes.~~ Closed by recorded QA for Issue #10.
 3. ~~Wikilink/embed fixture across modes.~~ Closed by recorded QA in `wikilinks.md`.
 4. Source-mode cross-file GFM fragment behavior.
-5. File-only link behavior.
+5. ~~File-only link behavior.~~ Closed by recorded QA for Issue #12 in `test-gfm.md` / `test-native.md`.
 6. Missing file and missing heading behavior.
 7. P2a heading target styles.
 8. P2a list/task-list/blockquote containers.

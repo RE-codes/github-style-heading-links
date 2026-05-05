@@ -2,6 +2,7 @@
 [same later](#another-heading)
 [slug-shaped gfm](#foo-bar)
 [cross-file](Other.md#target-heading)
+[file only](Other.md)
 [empty fragment](test-gfm.md#)
 [bold](#bold-heading)
 [italic](#italic-heading)

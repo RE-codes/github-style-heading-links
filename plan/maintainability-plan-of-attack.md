@@ -150,7 +150,7 @@ Files likely touched:
 
 Work items:
 
-1. Add fixture rows for P1 gaps: file-only links, missing files, existing file with missing heading, ~~empty fragments~~, ~~external schemes~~, wikilinks, and embeds.
+1. Add fixture rows for P1 gaps: ~~file-only links~~, missing files, existing file with missing heading, ~~empty fragments~~, ~~external schemes~~, wikilinks, and embeds.
    - Wikilink/embed target files now exist for manual QA: `Wikilink Target.md` and `Embedded Note.md`.
 2. Add fixture rows and slug tests for P2a heading targets: closing hashes, setext headings, square brackets, parentheses, escaped punctuation, links, images, HTML/entities, strikethrough, non-ASCII text, and emoji.
 3. Add fixture rows for P2a containers: lists, task lists, and blockquotes.
@@ -252,6 +252,7 @@ Move or introduce:
 
 - rendered link lookup: `target.closest("a, [data-href]")`
 - `decideAction()` usage for rendered elements
+- shared link-policy helpers currently living in `src/readingModeHandler.ts`, including `decideAction()`, `shouldHandleHref()`, and `shouldHandleResolvedTarget()`
 - source href extraction from `EditorView.posAtDOM()`
 - `extractMarkdownLinkHrefAtOffset()`
 - Live Preview rendered-source marker check, currently `.cm-underline`

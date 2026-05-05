@@ -31,6 +31,11 @@ export function shouldHandleHref(href: string): boolean {
     return false;
   }
 
+  // File-only links: hand back to native Obsidian for tab/cursor parity.
+  if (parsed.fragment === null && !href.includes("#")) {
+    return false;
+  }
+
   return parsed.fragment === null || parsed.fragment === slugify(parsed.fragment);
 }
 
