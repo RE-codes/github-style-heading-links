@@ -214,6 +214,7 @@ Manual QA in `wikilinks.md`:
 ## Follow-Up Items
 
 - Hover previews for same-file and cross-file GFM fragment links still use Obsidian's native preview path and can show unresolved fragment text, e.g. unable to find `"target-heading"`.
+- File-only link Ctrl/Cmd-click parity is verified on Windows with Ctrl-click; run the same row on macOS to confirm Cmd-click behavior before public release.
 - Live Preview unrendered Ctrl-click now acts on mouse release for the consolidated empty-fragment rows; recheck the callout fixture before removing this as a broader follow-up.
 - Live Preview unrendered and Source mode middle-click show a notable visual flash in the new tab in the callout fixture, briefly appearing rendered, unrendered, then rendered. This has only been observed in `callout.md` so far. Treat this as a likely code/event-order bug, not just cosmetic polish.
 - Source mode Ctrl-click now acts on mouse release for the consolidated empty-fragment rows; recheck the callout fixture before removing this as a broader follow-up.
