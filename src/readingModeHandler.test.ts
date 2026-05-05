@@ -58,6 +58,13 @@ describe("decideAction", () => {
 
     expect(decideAction(anchor)).toEqual({ kind: "ignore" });
   });
+
+  it("ignores file-only links so native Obsidian handles them", () => {
+    const anchor = document.createElement("a");
+    anchor.setAttribute("href", "Other.md");
+
+    expect(decideAction(anchor)).toEqual({ kind: "ignore" });
+  });
 });
 
 describe("handleReadingAnchorEvent", () => {

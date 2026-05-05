@@ -31,6 +31,10 @@ export function shouldHandleHref(href: string): boolean {
     return false;
   }
 
+  if (parsed.fragment === null && !href.includes("#")) {
+    return false;
+  }
+
   return parsed.fragment === null || parsed.fragment === slugify(parsed.fragment);
 }
 

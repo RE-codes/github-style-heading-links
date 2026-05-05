@@ -137,6 +137,15 @@ Manual QA in `callout.md`:
 
 ### Empty Fragments And Native Links
 
+- [x] GREEN: `[file only](Other.md)` in the paired `test-gfm.md` / `test-native.md` fixtures matches native file-open behavior with no plugin-imposed scroll or heading highlight.
+
+Manual QA on Windows desktop Obsidian, comparing plugin off and plugin on:
+
+- Reading mode: click, Ctrl-click, and middle-click match native.
+- Live Preview rendered: click, Ctrl-click, and middle-click match native after file-only links were handed back to Obsidian's native handler.
+- Live Preview unrendered: click, Ctrl-click, and middle-click match native after file-only links were handed back to Obsidian's native handler.
+- Source mode: click, Ctrl-click, and middle-click match native.
+
 - [x] GREEN: `[empty fragment](test-gfm.md#)` / `[empty fragment](test-native.md#)` in the paired `test-gfm.md` / `test-native.md` fixtures matches native empty-fragment behavior with no scroll.
 
 Manual QA originally recorded in `empty-fragment.md`; the fixture row is now consolidated into `test-gfm.md` and `test-native.md` for side-by-side parity checks:
@@ -164,7 +173,7 @@ Manual parity fixtures:
 
 - `test-gfm.md` uses GFM slug fragments such as `[same later](#another-heading)`.
 - `test-native.md` uses native Obsidian fragments such as `[same later](#Another%20Heading)`.
-- Both fixtures include cross-file links to `Other.md`, wikilink and tag non-interception rows, formatted heading links, empty-fragment links, and external scheme links for side-by-side QA.
+- Both fixtures include cross-file links to `Other.md`, file-only links to `Other.md`, wikilink and tag non-interception rows, formatted heading links, empty-fragment links, and external scheme links for side-by-side QA.
 - The external scheme rows cover `https://`, `http://`, `mailto:`, `tel:`, `obsidian://`, `file:`, protocol-relative `//example.com`, and `data:`.
 - Native Markdown heading fragments must remain native-handled; the plugin should only handle GFM slug fragments that native Obsidian does not already resolve.
 - Both fixtures intentionally cover a top heading and a later non-duplicate heading. Duplicate heading parity is intentionally left to `duplicates.md` and future work because native Obsidian duplicate-heading behavior relies on `^` block identifiers rather than GFM slug suffixes.
