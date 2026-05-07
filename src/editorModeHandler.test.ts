@@ -217,6 +217,49 @@ describe("extractMarkdownLinkHrefAtOffset", () => {
 });
 
 describe("handleRenderedAnchorMouseDown", () => {
+  it("does not intercept rendered missing-file links", () => {
+    const sourceFile = makeFile("test-source.md");
+    const app = makeApp({
+      files: [sourceFile]
+    });
+    const resolver = new LinkResolver(app as unknown as App);
+    const anchor = document.createElement("a");
+    const event = new MouseEvent("pointerdown", {
+      button: 0,
+      bubbles: true,
+      cancelable: true
+    });
+    let stopped = false;
+    let stoppedImmediately = false;
+
+    anchor.setAttribute("data-href", "Missing.md#x");
+    event.stopPropagation = () => {
+      stopped = true;
+    };
+    event.stopImmediatePropagation = () => {
+      stoppedImmediately = true;
+    };
+
+    const target = handleRenderedAnchorPointerDown(
+      anchor,
+      event,
+      resolver,
+      sourceFile.path
+    );
+
+    expect({
+      target,
+      defaultPrevented: event.defaultPrevented,
+      stopped,
+      stoppedImmediately
+    }).toEqual({
+      target: null,
+      defaultPrevented: false,
+      stopped: false,
+      stoppedImmediately: false
+    });
+  });
+
   it("tracks rendered anchor links on left-button pointerdown", () => {
     const sourceFile = makeFile("table.md");
     const app = makeApp({
@@ -462,6 +505,68 @@ describe("handleRenderedAnchorMouseDown", () => {
 });
 
 describe("handleSourceMouseDown", () => {
+  it("does not intercept source missing-file links", () => {
+    const sourceFile = makeFile("test-source.md");
+    const app = makeApp({
+      files: [sourceFile]
+    });
+    const resolver = new LinkResolver(app as unknown as App);
+    const target = document.createElement("span");
+    const event = new MouseEvent("mousedown", {
+      button: 0,
+      ctrlKey: true,
+      bubbles: true,
+      cancelable: true
+    });
+    const navigations: unknown[] = [];
+    let stopped = false;
+    let stoppedImmediately = false;
+    const view = {
+      posAtDOM: () => 12,
+      state: {
+        doc: {
+          lineAt: () => ({
+            from: 0,
+            text: "[missing](Missing.md#x)"
+          })
+        }
+      }
+    } as unknown as EditorView;
+
+    event.stopPropagation = () => {
+      stopped = true;
+    };
+    event.stopImmediatePropagation = () => {
+      stoppedImmediately = true;
+    };
+
+    const resolvedTarget = handleSourceMouseDown(
+      target,
+      event,
+      view,
+      resolver,
+      sourceFile.path,
+      false,
+      (resolvedTarget, newLeaf) => {
+        navigations.push({ target: resolvedTarget, newLeaf });
+      }
+    );
+
+    expect({
+      resolvedTarget,
+      defaultPrevented: event.defaultPrevented,
+      stopped,
+      stoppedImmediately,
+      navigations
+    }).toEqual({
+      resolvedTarget: null,
+      defaultPrevented: false,
+      stopped: false,
+      stoppedImmediately: false,
+      navigations: []
+    });
+  });
+
   it("does not navigate source links on plain left-click", () => {
     const sourceFile = makeFile("test-source.md");
     const app = makeApp({

@@ -146,6 +146,24 @@ Manual QA on Windows desktop Obsidian, comparing plugin off and plugin on:
 - Live Preview unrendered: click, Ctrl-click, and middle-click match native after file-only links were handed back to Obsidian's native handler.
 - Source mode: click, Ctrl-click, and middle-click match native.
 
+- [x] GREEN: `[missing file](Missing.md)` and `[missing fragment](Missing.md#x)` in the paired `test-gfm.md` / `test-native.md` fixtures match native missing-file behavior.
+
+Manual QA on Windows desktop Obsidian, comparing plugin off and plugin on:
+
+`Missing.md` was removed before each row so each gesture exercised the missing-file path.
+
+| Mode | Link state | Gesture | Observed behavior | Status |
+|---|---|---|---|---|
+| Reading | rendered | click / Ctrl-click / middle-click | Plugin-on behavior matches native behavior for both missing-file rows. | GREEN |
+| Live Preview | rendered | click / Ctrl-click / middle-click | Plugin-on behavior matches native behavior for both missing-file rows. | GREEN |
+| Live Preview | unrendered | click / Ctrl-click / middle-click | Plugin-on behavior matches native behavior for both missing-file rows. | GREEN |
+| Source mode | unrendered | click / Ctrl-click / middle-click | Plugin-on behavior matches native behavior for both missing-file rows. | GREEN |
+
+Unit coverage:
+
+- `readingModeHandler.test.ts` verifies missing-file links do not call `preventDefault`, stop propagation, or navigate when resolution returns null.
+- `editorModeHandler.test.ts` verifies rendered and source missing-file paths do not call `preventDefault`, stop propagation, or navigate when resolution returns null.
+
 - [x] GREEN: `[empty fragment](test-gfm.md#)` / `[empty fragment](test-native.md#)` in the paired `test-gfm.md` / `test-native.md` fixtures matches native empty-fragment behavior with no scroll.
 
 Manual QA originally recorded in `empty-fragment.md`; the fixture row is now consolidated into `test-gfm.md` and `test-native.md` for side-by-side parity checks:
@@ -173,7 +191,7 @@ Manual parity fixtures:
 
 - `test-gfm.md` uses GFM slug fragments such as `[same later](#another-heading)`.
 - `test-native.md` uses native Obsidian fragments such as `[same later](#Another%20Heading)`.
-- Both fixtures include cross-file links to `Other.md`, file-only links to `Other.md`, wikilink and tag non-interception rows, formatted heading links, empty-fragment links, and external scheme links for side-by-side QA.
+- Both fixtures include cross-file links to `Other.md`, file-only links to `Other.md`, missing-file links to `Missing.md`, wikilink and tag non-interception rows, formatted heading links, empty-fragment links, and external scheme links for side-by-side QA.
 - The external scheme rows cover `https://`, `http://`, `mailto:`, `tel:`, `obsidian://`, `file:`, protocol-relative `//example.com`, and `data:`.
 - Native Markdown heading fragments must remain native-handled; the plugin should only handle GFM slug fragments that native Obsidian does not already resolve.
 - Both fixtures intentionally cover a top heading and a later non-duplicate heading. Duplicate heading parity is intentionally left to `duplicates.md` and future work because native Obsidian duplicate-heading behavior relies on `^` block identifiers rather than GFM slug suffixes.

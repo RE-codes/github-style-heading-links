@@ -68,6 +68,54 @@ describe("decideAction", () => {
 });
 
 describe("handleReadingAnchorEvent", () => {
+  it("does not intercept missing-file links", () => {
+    const sourceFile = makeFile("test-source.md");
+    const app = makeApp({
+      files: [sourceFile]
+    });
+    const resolver = new LinkResolver(app as unknown as App);
+    const anchor = document.createElement("a");
+    const event = new MouseEvent("click", {
+      bubbles: true,
+      cancelable: true
+    });
+    const navigations: unknown[] = [];
+    let stopped = false;
+    let stoppedImmediately = false;
+
+    anchor.setAttribute("data-href", "Missing.md#x");
+    event.stopPropagation = () => {
+      stopped = true;
+    };
+    event.stopImmediatePropagation = () => {
+      stoppedImmediately = true;
+    };
+
+    const handled = handleReadingAnchorEvent(
+      anchor,
+      event,
+      resolver,
+      sourceFile.path,
+      (target, newLeaf) => {
+        navigations.push({ target, newLeaf });
+      }
+    );
+
+    expect({
+      handled,
+      defaultPrevented: event.defaultPrevented,
+      stopped,
+      stoppedImmediately,
+      navigations
+    }).toEqual({
+      handled: false,
+      defaultPrevented: false,
+      stopped: false,
+      stoppedImmediately: false,
+      navigations: []
+    });
+  });
+
   it("does not intercept slug-shaped fragments that match native headings exactly", () => {
     const sourceFile = makeFile("test-source.md");
     const app = makeApp({
