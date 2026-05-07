@@ -3,6 +3,8 @@
 [slug-shaped native](#foo-bar)
 [cross-file](Other.md#Target%20Heading)
 [file only](Other.md)
+[missing file](Missing.md)
+[missing fragment](Missing.md#x)
 [empty fragment](test-native.md#)
 [bold](#Bold%20Heading)
 [italic](#Italic%20Heading)

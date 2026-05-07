@@ -11,7 +11,7 @@
    - State the next test to write or run before making the change.
    - Explain why this is the smallest safe change.
 
-3. Test every change.
+3. Test every code or config change.
    - Follow RED -> GREEN -> REFACTOR when changing behavior.
    - After any code or config edit, run the narrowest relevant test or verification first.
    - Report results explicitly.
@@ -35,7 +35,8 @@
    - Provide short explanations tied to the current code over generic tutorials.
    - Surface tradeoffs and uncertainties as they arise.
    - Challenge weak assumptions directly.
-   - Propose the next small step before making larger changes.
+   - Propose the next small step before making changes.
+   - If permission for a change is rejected, found out why before trying again.
 
 ## Project Notes
 
@@ -43,5 +44,5 @@
 - Prefer focused pure-function tests for parsing and slug logic before integration-style behavior.
 - Verify behavior carefully around Obsidian APIs, cache timing, DOM/events, and mode differences.
 - Use the local dev vault path from `OBSIDIAN_VAULT_PLUGIN_DIR`.
-- Prefer existing `package.json` scripts over ad hoc commands when an equivalent script exists.
-- Use copied or synced plugin artifacts for Windows Obsidian when working from WSL.
+- Use existing `package.json` scripts when running tests, syncing the vault plugin assets, or running a build.
+- Use synced plugin artifacts for Windows Obsidian when working from WSL.
