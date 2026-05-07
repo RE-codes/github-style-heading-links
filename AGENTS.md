@@ -36,7 +36,7 @@
    - Surface tradeoffs and uncertainties as they arise.
    - Challenge weak assumptions directly.
    - Propose the next small step before making changes.
-   - If permission for a change is rejected, found out why before trying again.
+   - If permission for a change is rejected, find out why before trying again.
 
 ## Project Notes
 
