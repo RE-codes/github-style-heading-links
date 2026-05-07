@@ -522,7 +522,7 @@ describe("handleSourceMouseDown", () => {
     let stopped = false;
     let stoppedImmediately = false;
     const view = {
-      posAtDOM: () => 1,
+      posAtDOM: () => 12,
       state: {
         doc: {
           lineAt: () => ({
