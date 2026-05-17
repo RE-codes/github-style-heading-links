@@ -1,48 +1,29 @@
-# AGENTS.md - Project Working Rules
+# AGENTS.md - github-style-heading-links
 
-1. Work in small, reviewable steps.
-   - State the next micro-goal.
-   - Make the smallest reasonable change.
-   - Validate immediately.
+## Project Working Rules
 
-2. Explain before editing and follow strict TDD.
-   - State the behavior being changed.
-   - Name the file(s) being changed.
-   - State the next test to write or run before making the change.
-   - Explain why this is the smallest safe change.
+- Follow strict TDD for behavior changes.
+  - State the behavior being changed.
+  - Name the test to write or run before making the change.
+  - Follow RED -> GREEN -> REFACTOR.
+  - After each step, run the narrowest relevant test or verification.
+  - Report results explicitly.
+  - Claim completion only after validation.
+  - If permission for a change is rejected, find out why before trying again.
 
-3. Test every code or config change.
-   - Follow RED -> GREEN -> REFACTOR when changing behavior.
-   - After any code or config edit, run the narrowest relevant test or verification first.
-   - Report results explicitly.
-   - Claim completion only after validation.
+- Preserve native Obsidian behavior unless the task explicitly changes it.
 
-4. Stay in scope.
-   - Keep changes tightly aligned to the current step.
+- Prefer focused pure-function tests for parsing and slug logic before integration-style behavior.
 
-5. Prefer minimal diffs and concrete communication.
-   - Use concise technical explanations.
-   - Mention specific files and functions.
-   - Distinguish facts, inferences, and next steps.
-   - Avoid filler.
+- Verify behavior carefully around Obsidian APIs, cache timing, DOM/events, and mode differences.
+  - Use Context7 to reference needed API information, including Obsidian API and CodeMirror.
 
-6. Prefer facts over inference.
-   - Verify material facts from the code, tests, docs, or other available sources before relying on inference.
-   - Distinguish clearly between observed facts, inferences, and open questions.
-   - Reduce uncertainty by checking the relevant source rather than guessing.
-
-7. Work as a pair programmer.
-   - Provide short explanations tied to the current code over generic tutorials.
-   - Surface tradeoffs and uncertainties as they arise.
-   - Challenge weak assumptions directly.
-   - Propose the next small step before making changes.
-   - If permission for a change is rejected, find out why before trying again.
+- Prefer `package.json` scripts for build, test, check, lint, and vault-sync tasks.
+  - Inspect `package.json` first.
+  - Run the relevant `npm run ...` script instead of invoking underlying tools directly, unless there is a specific reason to bypass the script.
 
 ## Project Notes
 
-- Preserve native Obsidian behavior unless the task explicitly changes it.
-- Prefer focused pure-function tests for parsing and slug logic before integration-style behavior.
-- Verify behavior carefully around Obsidian APIs, cache timing, DOM/events, and mode differences.
 - Use the local dev vault path from `OBSIDIAN_VAULT_PLUGIN_DIR`.
-- Use existing `package.json` scripts when running tests, syncing the vault plugin assets, or running a build.
 - Use synced plugin artifacts for Windows Obsidian when working from WSL.
+- Planning docs live in `/plan`. Use these for reference.
