@@ -1,3 +1,5 @@
+**DEPRECATION NOTICE**: this document is largely deprecated and has been revised and replaced by the other documents in `/plan` of this repo.
+
 # GFM Fragment Links — Obsidian Plugin (MVP)
 
 - [GFM Fragment Links — Obsidian Plugin (MVP)](#gfm-fragment-links--obsidian-plugin-mvp)
