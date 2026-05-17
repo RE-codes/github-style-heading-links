@@ -16,7 +16,8 @@ import {
   handleUnanchoredMouseUp,
   handleRenderedAnchorMouseDown,
   retargetNativeMiddleClickTab,
-  suppressRenderedAuxClick
+  suppressRenderedAuxClick,
+  suppressUnanchoredClick
 } from "./editorModeHandler";
 import type { App } from "obsidian";
 import { makeApp, makeFile, heading } from "./resolver.test-support";
@@ -732,11 +733,13 @@ describe("handleSourceMouseDown", () => {
     });
   });
 
-  it("navigates live preview rendered source-fallback clicks in the same leaf", () => {
+  it("tracks live preview rendered source-fallback clicks on mousedown without navigating", () => {
     const sourceFile = makeFile("test-source.md");
+    const targetFile = makeFile("Other.md");
     const app = makeApp({
       files: [sourceFile],
-      headingEntries: [[sourceFile, [heading("Target Heading", 4)]]]
+      resolvedFiles: [targetFile],
+      headingEntries: [[targetFile, [heading("Target Heading", 4)]]]
     });
     const resolver = new LinkResolver(app as unknown as App);
     const target = document.createElement("span");
@@ -748,7 +751,7 @@ describe("handleSourceMouseDown", () => {
         doc: {
           lineAt: () => ({
             from: 0,
-            text: "[same-file](#target-heading)"
+            text: "[missing heading](Other.md#nonexistent-heading)"
           })
         }
       }
@@ -756,7 +759,7 @@ describe("handleSourceMouseDown", () => {
 
     target.classList.add("cm-underline");
 
-    handleSourceMouseDown(
+    const resolvedTarget = handleSourceMouseDown(
       target,
       event,
       view,
@@ -768,17 +771,15 @@ describe("handleSourceMouseDown", () => {
       }
     );
 
-    expect(navigations).toEqual([
-      {
-        target: {
-          file: sourceFile,
-          line: 4,
-          heading: "Target Heading",
-          requiresLineFallback: false
-        },
-        newLeaf: false
-      }
-    ]);
+    expect({ resolvedTarget, navigations }).toEqual({
+      resolvedTarget: {
+        file: targetFile,
+        line: null,
+        heading: null,
+        requiresLineFallback: false
+      },
+      navigations: []
+    });
   });
 
   it("tracks live preview unrendered ctrl-clicks on mousedown without navigating", () => {
@@ -1046,6 +1047,35 @@ describe("handleSourceMouseDown", () => {
         options: { fallbackToLine: false }
       }
     ]);
+  });
+
+  it("suppresses the follow-up click after source ctrl-click navigation", () => {
+    const click = new MouseEvent("click", { button: 0, ctrlKey: true });
+    let prevented = false;
+    let stopped = false;
+    let stoppedImmediately = false;
+
+    click.preventDefault = () => {
+      prevented = true;
+    };
+    click.stopPropagation = () => {
+      stopped = true;
+    };
+    click.stopImmediatePropagation = () => {
+      stoppedImmediately = true;
+    };
+
+    suppressUnanchoredClick(click, true);
+
+    expect({
+      prevented,
+      stopped,
+      stoppedImmediately
+    }).toEqual({
+      prevented: true,
+      stopped: true,
+      stoppedImmediately: true
+    });
   });
 
   it("does not navigate twice when rendered pointerup is followed by unanchored mouseup", () => {

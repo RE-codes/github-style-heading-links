@@ -164,6 +164,22 @@ Unit coverage:
 - `readingModeHandler.test.ts` verifies missing-file links do not call `preventDefault`, stop propagation, or navigate when resolution returns null.
 - `editorModeHandler.test.ts` verifies rendered and source missing-file paths do not call `preventDefault`, stop propagation, or navigate when resolution returns null.
 
+- [x] GREEN: `[missing heading](Other.md#nonexistent-heading)` in `test-gfm.md` matches the paired native missing-heading row in `test-native.md`: existing `Other.md` opens with no scroll and no error.
+
+Manual QA on Windows desktop Obsidian, comparing `[missing heading](Other.md#nonexistent-heading)` against `[missing heading](Other.md#Nonexistent%20Heading)`:
+
+| Mode | Link state | Gesture | Observed behavior | Status |
+|---|---|---|---|---|
+| Reading | rendered | click / Ctrl-click / middle-click | Opens `Other.md`; no scroll; no error; plugin-on GFM behavior matches native. | GREEN |
+| Live Preview | rendered | click / Ctrl-click / middle-click | Opens `Other.md`; no scroll; no error; plugin-on GFM behavior matches native after release-timing and follow-up click suppression fixes. | GREEN |
+| Live Preview | unrendered | click / Ctrl-click / middle-click | Plain click places cursor; Ctrl-click and middle-click open `Other.md`; no scroll; no error; plugin-on GFM behavior matches native. | GREEN |
+| Source mode | unrendered | click / Ctrl-click / middle-click | Plain click places cursor; Ctrl-click and middle-click open `Other.md`; no scroll; no error; plugin-on GFM behavior matches native. | GREEN |
+
+Unit coverage:
+
+- `resolver.test.ts` verifies an existing file with a missing heading slug resolves to `{ file, line: null, heading: null }`.
+- `editorModeHandler.test.ts` verifies Live Preview rendered-source fallback does not navigate on mousedown and source Ctrl-click follow-up clicks are suppressed.
+
 - [x] GREEN: `[empty fragment](test-gfm.md#)` / `[empty fragment](test-native.md#)` in the paired `test-gfm.md` / `test-native.md` fixtures matches native empty-fragment behavior with no scroll.
 
 Manual QA originally recorded in `empty-fragment.md`; the fixture row is now consolidated into `test-gfm.md` and `test-native.md` for side-by-side parity checks:
@@ -191,7 +207,7 @@ Manual parity fixtures:
 
 - `test-gfm.md` uses GFM slug fragments such as `[same later](#another-heading)`.
 - `test-native.md` uses native Obsidian fragments such as `[same later](#Another%20Heading)`.
-- Both fixtures include cross-file links to `Other.md`, file-only links to `Other.md`, missing-file links to `Missing.md`, wikilink and tag non-interception rows, formatted heading links, empty-fragment links, and external scheme links for side-by-side QA.
+- Both fixtures include cross-file links to `Other.md`, file-only links to `Other.md`, missing-file links to `Missing.md`, missing-heading links to `Other.md`, wikilink and tag non-interception rows, formatted heading links, empty-fragment links, and external scheme links for side-by-side QA.
 - The external scheme rows cover `https://`, `http://`, `mailto:`, `tel:`, `obsidian://`, `file:`, protocol-relative `//example.com`, and `data:`.
 - Native Markdown heading fragments must remain native-handled; the plugin should only handle GFM slug fragments that native Obsidian does not already resolve.
 - Both fixtures intentionally cover a top heading and a later non-duplicate heading. Duplicate heading parity is intentionally left to `duplicates.md` and future work because native Obsidian duplicate-heading behavior relies on `^` block identifiers rather than GFM slug suffixes.

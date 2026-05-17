@@ -5,7 +5,8 @@
 - Follow strict TDD for behavior changes.
   - State the behavior being changed.
   - Name the test to write or run before making the change.
-  - Follow RED -> GREEN -> REFACTOR.
+  - Follow RED -> GREEN -> REFACTOR; do not claim done at GREEN.
+  - After GREEN, either make a no-behavior-change refactor or state why none is warranted.
   - After each step, run the narrowest relevant test or verification.
   - Report results explicitly.
   - Claim completion only after validation.

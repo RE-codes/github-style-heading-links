@@ -5,6 +5,7 @@
 [file only](Other.md)
 [missing file](Missing.md)
 [missing fragment](Missing.md#x)
+[missing heading](Other.md#nonexistent-heading)
 [empty fragment](test-gfm.md#)
 [bold](#bold-heading)
 [italic](#italic-heading)
