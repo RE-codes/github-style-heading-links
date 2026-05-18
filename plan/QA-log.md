@@ -56,6 +56,11 @@ Current status after native-parity reset:
 
 - [x] GREEN: Ctrl-clicking `[same later](#another-heading)` in Source mode scrolls to `## Another Heading`.
 - [x] GREEN: middle-clicking `[same later](#another-heading)` in Source mode opens one Live Preview tab and highlights heading with children; observed slight highlight latency.
+- [x] GREEN: clicking `[cross-file](Other.md#target-heading)` in Source mode places the cursor only; no navigation.
+- [x] GREEN: Ctrl-clicking `[cross-file](Other.md#target-heading)` in Source mode opens `Other.md` in the same tab and highlights `## Target Heading` with children.
+- [x] GREEN: middle-clicking `[cross-file](Other.md#target-heading)` in Source mode opens `Other.md` in a new Live Preview tab and highlights `## Target Heading` with children.
+
+NOTE: Source-mode middle-click highlighting is slightly delayed, matching the existing middle-click latency follow-up item.
 
 ## Step 7 Edge Cases
 
