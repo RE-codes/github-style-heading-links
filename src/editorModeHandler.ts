@@ -116,7 +116,7 @@ export function createEditorExtension(
             this.pendingRenderedClick = {
               previousLeaf: app.workspace.activeLeaf,
               target: resolvedTarget,
-              newLeaf: shouldOpenSourceMouseUpInNewLeaf(event, isLivePreview)
+              newLeaf: isLivePreview && (event.ctrlKey || event.metaKey)
             };
           }
           if (event.button === 1 && resolvedTarget !== null) {
@@ -237,12 +237,12 @@ export function createEditorExtension(
 
         const linkElement = target.closest("a, [data-href]");
         if (linkElement === null) {
-          suppressUnanchoredClick(event, this.suppressNextUnanchoredClick);
+          suppressLeftClick(event, this.suppressNextUnanchoredClick);
           this.suppressNextUnanchoredClick = false;
           return;
         }
 
-        handleRenderedAnchorClick(
+        suppressLeftClick(
           event,
           this.suppressNextRenderedClick
         );
@@ -386,24 +386,7 @@ function shouldNavigateSourceMouseDown(
     return false;
   }
 
-  return !isDeferredLivePreviewRenderedSourceClick(
-    isLivePreview,
-    renderedLinkText
-  );
-}
-
-function isDeferredLivePreviewRenderedSourceClick(
-  isLivePreview: boolean,
-  renderedLinkText: boolean
-): boolean {
-  return isLivePreview && renderedLinkText;
-}
-
-function shouldOpenSourceMouseUpInNewLeaf(
-  event: MouseEvent,
-  isLivePreview: boolean
-): boolean {
-  return isLivePreview && (event.ctrlKey || event.metaKey);
+  return !(isLivePreview && renderedLinkText);
 }
 
 function isRenderedLinkText(target: Element): boolean {
@@ -579,20 +562,7 @@ export function handleRenderedAnchorPointerUp(
   return true;
 }
 
-export function handleRenderedAnchorClick(
-  event: MouseEvent,
-  suppressClick: boolean
-): void {
-  if (!suppressClick || event.button !== 0) {
-    return;
-  }
-
-  event.preventDefault();
-  event.stopPropagation();
-  event.stopImmediatePropagation();
-}
-
-export function suppressUnanchoredClick(
+export function suppressLeftClick(
   event: MouseEvent,
   suppressClick: boolean
 ): void {

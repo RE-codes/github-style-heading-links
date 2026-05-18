@@ -177,7 +177,7 @@ Manual QA on Windows desktop Obsidian, comparing `[missing heading](Other.md#non
 
 Unit coverage:
 
-- `resolver.test.ts` verifies an existing file with a missing heading slug resolves to `{ file, line: null, heading: null }`.
+- Existing `resolver.test.ts` coverage verifies an existing file with a missing heading slug resolves to `{ file, line: null, heading: null }`.
 - `editorModeHandler.test.ts` verifies Live Preview rendered-source fallback does not navigate on mousedown and source Ctrl-click follow-up clicks are suppressed.
 
 - [x] GREEN: `[empty fragment](test-gfm.md#)` / `[empty fragment](test-native.md#)` in the paired `test-gfm.md` / `test-native.md` fixtures matches native empty-fragment behavior with no scroll.
