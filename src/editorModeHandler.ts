@@ -41,12 +41,15 @@ export function createEditorExtension(
       // pointer events did not consume the click. Rendered middle-click keeps
       // mousedown native, navigates directly on mouseup, and suppresses the
       // following auxclick that would otherwise open a second tab.
-      // Source links resolve on mousedown for Ctrl/Cmd-click, and middle-click
-      // lets Obsidian open the tab before we retarget it on mouseup/file-open.
+      // Source Ctrl/Cmd-clicks and Live Preview rendered link text resolve on
+      // mousedown, then navigate on mouseup to match native release timing.
+      // Source middle-click lets Obsidian open the tab before we retarget it on
+      // mouseup/file-open.
       private pendingMiddleClick: PendingClick | null = null;
       private pendingRenderedClick: PendingClick | null = null;
       private handledRenderedPointerDown = false;
       private suppressNextRenderedClick = false;
+      private suppressNextUnanchoredClick = false;
       private suppressNextRenderedAuxClick = false;
 
       private handlePointerDown = (event: PointerEvent) => {
@@ -83,6 +86,7 @@ export function createEditorExtension(
 
       private handleMouseDown = (event: MouseEvent) => {
         this.suppressNextRenderedClick = false;
+        this.suppressNextUnanchoredClick = false;
         this.suppressNextRenderedAuxClick = false;
         const target = event.target;
         if (!(target instanceof Element)) {
@@ -102,15 +106,17 @@ export function createEditorExtension(
             isLivePreview,
             onNavigate
           );
+          // Live Preview rendered link text reaches this source path, but
+          // native navigation happens on mouseup. Store the target here so the
+          // release handler can navigate without acting on mousedown.
           if (
             event.button === 0 &&
-            (event.ctrlKey || event.metaKey) &&
             resolvedTarget !== null
           ) {
             this.pendingRenderedClick = {
               previousLeaf: app.workspace.activeLeaf,
               target: resolvedTarget,
-              newLeaf: isLivePreview
+              newLeaf: isLivePreview && (event.ctrlKey || event.metaKey)
             };
           }
           if (event.button === 1 && resolvedTarget !== null) {
@@ -174,6 +180,8 @@ export function createEditorExtension(
 
         const linkElement = target.closest("a, [data-href]");
         if (linkElement === null) {
+          const hadPendingClick =
+            event.button === 0 && this.pendingRenderedClick !== null;
           handleUnanchoredMouseUp(
             event,
             event.button === 0 ? this.pendingRenderedClick : this.pendingMiddleClick,
@@ -181,6 +189,7 @@ export function createEditorExtension(
           );
           if (event.button === 0) {
             this.pendingRenderedClick = null;
+            this.suppressNextUnanchoredClick = hadPendingClick;
           }
           this.pendingMiddleClick = null;
           return;
@@ -228,10 +237,12 @@ export function createEditorExtension(
 
         const linkElement = target.closest("a, [data-href]");
         if (linkElement === null) {
+          suppressLeftClick(event, this.suppressNextUnanchoredClick);
+          this.suppressNextUnanchoredClick = false;
           return;
         }
 
-        handleRenderedAnchorClick(
+        suppressLeftClick(
           event,
           this.suppressNextRenderedClick
         );
@@ -343,7 +354,7 @@ export function handleSourceMouseDown(
   event.preventDefault();
   event.stopPropagation();
   event.stopImmediatePropagation();
-  if (!(event.ctrlKey || event.metaKey)) {
+  if (shouldNavigateSourceMouseDown(event, isLivePreview, renderedLinkText)) {
     onNavigate(
       targetFile,
       false,
@@ -364,6 +375,18 @@ function isSourceMouseDownFollowEvent(
   }
 
   return event.button === 0 && isLivePreview && renderedLinkText;
+}
+
+function shouldNavigateSourceMouseDown(
+  event: MouseEvent,
+  isLivePreview: boolean,
+  renderedLinkText: boolean
+): boolean {
+  if (event.ctrlKey || event.metaKey) {
+    return false;
+  }
+
+  return !(isLivePreview && renderedLinkText);
 }
 
 function isRenderedLinkText(target: Element): boolean {
@@ -539,7 +562,7 @@ export function handleRenderedAnchorPointerUp(
   return true;
 }
 
-export function handleRenderedAnchorClick(
+export function suppressLeftClick(
   event: MouseEvent,
   suppressClick: boolean
 ): void {

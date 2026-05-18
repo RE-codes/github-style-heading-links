@@ -1,13 +1,12 @@
 // @vitest-environment happy-dom
 
 import { describe, expect, it } from "vitest";
-import type { EditorView } from "@codemirror/view";
-import type { WorkspaceLeaf } from "obsidian";
+import { EditorView } from "@codemirror/view";
+import { editorLivePreviewField, type App, type WorkspaceLeaf } from "obsidian";
 
 import {
   createEditorExtension,
   extractMarkdownLinkHrefAtOffset,
-  handleRenderedAnchorClick,
   handleRenderedAnchorMouseUp,
   handleRenderedAnchorPointerDown,
   handleRenderedAnchorPointerUp,
@@ -16,15 +15,151 @@ import {
   handleUnanchoredMouseUp,
   handleRenderedAnchorMouseDown,
   retargetNativeMiddleClickTab,
-  suppressRenderedAuxClick
+  suppressRenderedAuxClick,
+  suppressLeftClick
 } from "./editorModeHandler";
-import type { App } from "obsidian";
 import { makeApp, makeFile, heading } from "./resolver.test-support";
 import { LinkResolver } from "./resolver";
 
 describe("createEditorExtension", () => {
   it("returns a CodeMirror extension", () => {
     expect(createEditorExtension).toBeTypeOf("function");
+  });
+
+  it("does not suppress unanchored clicks without pending source navigation", () => {
+    const sourceFile = makeFile("test-source.md");
+    const app = makeApp({
+      files: [sourceFile],
+      headingEntries: [[sourceFile, [heading("Target Heading", 4)]]]
+    });
+    const appWithWorkspace = {
+      ...app,
+      workspace: {
+        activeLeaf: {} as WorkspaceLeaf,
+        getActiveFile: () => sourceFile
+      }
+    } as unknown as App;
+    const resolver = new LinkResolver(appWithWorkspace);
+    const view = new EditorView({
+      doc: "[same-file](#target-heading)",
+      extensions: [
+        editorLivePreviewField,
+        createEditorExtension(appWithWorkspace, resolver, () => {
+          return;
+        })
+      ]
+    });
+    const sourceLink = document.createElement("span");
+    const bareClick = new MouseEvent("click", {
+      button: 0,
+      ctrlKey: true,
+      bubbles: true,
+      cancelable: true
+    });
+    let stoppedImmediately = false;
+
+    bareClick.stopImmediatePropagation = () => {
+      stoppedImmediately = true;
+    };
+    view.dom.append(sourceLink);
+    sourceLink.dispatchEvent(bareClick);
+    view.destroy();
+
+    expect(stoppedImmediately).toBe(false);
+  });
+
+  it("suppresses unanchored follow-up clicks after source ctrl-click mouseup", () => {
+    const sourceFile = makeFile("test-source.md");
+    const app = makeApp({
+      files: [sourceFile],
+      headingEntries: [[sourceFile, [heading("Target Heading", 4)]]]
+    });
+    const appWithWorkspace = {
+      ...app,
+      workspace: {
+        activeLeaf: {} as WorkspaceLeaf,
+        getActiveFile: () => sourceFile
+      }
+    } as unknown as App;
+    const resolver = new LinkResolver(appWithWorkspace);
+    const navigations: unknown[] = [];
+    const view = new EditorView({
+      doc: "[same-file](#target-heading)",
+      extensions: [
+        editorLivePreviewField,
+        createEditorExtension(
+          appWithWorkspace,
+          resolver,
+          (target, newLeaf, options) => {
+            navigations.push({ target, newLeaf, options });
+          }
+        )
+      ]
+    });
+    const sourceLink = document.createElement("span");
+    const mouseDown = new MouseEvent("mousedown", {
+      button: 0,
+      ctrlKey: true,
+      bubbles: true,
+      cancelable: true
+    });
+    const mouseUp = new MouseEvent("mouseup", {
+      button: 0,
+      ctrlKey: true,
+      bubbles: true,
+      cancelable: true
+    });
+    const followUpClick = new MouseEvent("click", {
+      button: 0,
+      ctrlKey: true,
+      bubbles: true,
+      cancelable: true
+    });
+    let followUpPrevented = false;
+    let followUpStopped = false;
+    let followUpStoppedImmediately = false;
+
+    followUpClick.preventDefault = () => {
+      followUpPrevented = true;
+    };
+    followUpClick.stopPropagation = () => {
+      followUpStopped = true;
+    };
+    followUpClick.stopImmediatePropagation = () => {
+      followUpStoppedImmediately = true;
+    };
+    view.dom.append(sourceLink);
+    (view as EditorView & {
+      posAtDOM: (node: Node, offset?: number) => number;
+    }).posAtDOM = () => 1;
+
+    sourceLink.dispatchEvent(mouseDown);
+    sourceLink.dispatchEvent(mouseUp);
+    sourceLink.dispatchEvent(followUpClick);
+    view.destroy();
+
+    expect({
+      followUpPrevented,
+      followUpStopped,
+      followUpStoppedImmediately,
+      navigations
+    }).toEqual({
+      followUpPrevented: true,
+      followUpStopped: true,
+      followUpStoppedImmediately: true,
+      navigations: [
+        {
+          target: {
+            file: sourceFile,
+            line: 4,
+            heading: "Target Heading",
+            requiresLineFallback: false
+          },
+          newLeaf: false,
+          options: { fallbackToLine: false }
+        }
+      ]
+    });
   });
 });
 
@@ -732,11 +867,13 @@ describe("handleSourceMouseDown", () => {
     });
   });
 
-  it("navigates live preview rendered source-fallback clicks in the same leaf", () => {
+  it("tracks live preview rendered source-fallback clicks on mousedown without navigating", () => {
     const sourceFile = makeFile("test-source.md");
+    const targetFile = makeFile("Other.md");
     const app = makeApp({
       files: [sourceFile],
-      headingEntries: [[sourceFile, [heading("Target Heading", 4)]]]
+      resolvedFiles: [targetFile],
+      headingEntries: [[targetFile, [heading("Target Heading", 4)]]]
     });
     const resolver = new LinkResolver(app as unknown as App);
     const target = document.createElement("span");
@@ -748,7 +885,7 @@ describe("handleSourceMouseDown", () => {
         doc: {
           lineAt: () => ({
             from: 0,
-            text: "[same-file](#target-heading)"
+            text: "[missing heading](Other.md#nonexistent-heading)"
           })
         }
       }
@@ -756,7 +893,7 @@ describe("handleSourceMouseDown", () => {
 
     target.classList.add("cm-underline");
 
-    handleSourceMouseDown(
+    const resolvedTarget = handleSourceMouseDown(
       target,
       event,
       view,
@@ -768,17 +905,15 @@ describe("handleSourceMouseDown", () => {
       }
     );
 
-    expect(navigations).toEqual([
-      {
-        target: {
-          file: sourceFile,
-          line: 4,
-          heading: "Target Heading",
-          requiresLineFallback: false
-        },
-        newLeaf: false
-      }
-    ]);
+    expect({ resolvedTarget, navigations }).toEqual({
+      resolvedTarget: {
+        file: targetFile,
+        line: null,
+        heading: null,
+        requiresLineFallback: false
+      },
+      navigations: []
+    });
   });
 
   it("tracks live preview unrendered ctrl-clicks on mousedown without navigating", () => {
@@ -1153,7 +1288,7 @@ describe("handleSourceMouseDown", () => {
         navigations.push({ target, newLeaf, options });
       }
     );
-    handleRenderedAnchorClick(click, pointerUpHandled);
+    suppressLeftClick(click, pointerUpHandled);
 
     expect({ stoppedImmediately, navigations }).toEqual({
       stoppedImmediately: true,
@@ -1180,7 +1315,7 @@ describe("handleSourceMouseDown", () => {
       stoppedImmediately = true;
     };
 
-    handleRenderedAnchorClick(click, false);
+    suppressLeftClick(click, false);
 
     expect(stoppedImmediately).toBe(false);
   });

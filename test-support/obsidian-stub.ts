@@ -1,3 +1,10 @@
+import { StateField } from "@codemirror/state";
+
+export const editorLivePreviewField = StateField.define<boolean>({
+  create: () => false,
+  update: (value) => value
+});
+
 export class TAbstractFile {
   constructor(public path: string) {}
 }
