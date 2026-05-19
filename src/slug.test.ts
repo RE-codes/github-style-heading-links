@@ -65,6 +65,10 @@ describe("slugify", () => {
   it("preserves meaningful underscores", () => {
     expect(slugify("## snake_case")).toBe("snake_case");
   });
+
+  it("slugifies square-bracket heading text like GitHub", () => {
+    expect(slugify("## API [v2]")).toBe("api-v2");
+  });
 });
 
 describe("buildSlugTable", () => {
@@ -86,6 +90,10 @@ describe("buildSlugTable", () => {
 
   it("slugifies raw markdown headings", () => {
     expect(buildSlugTable(["## Foo **Bar**"])).toEqual(["foo-bar"]);
+  });
+
+  it("uses GitHub slugs for square-bracket heading text", () => {
+    expect(buildSlugTable(["## API [v2]"])).toEqual(["api-v2"]);
   });
 });
 
