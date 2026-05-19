@@ -247,22 +247,22 @@ Manual QA on Windows desktop Obsidian, comparing the paired bracketed-heading ro
 
 ### P2a Escaped-Punctuation Heading
 
-- [x] GREEN: `github-slugger` returns `foo-bar` for `Foo \\[bar\\]`; `slugify("## Foo \\\\[bar\\\\]")` and `buildSlugTable(["## Foo \\\\[bar\\\\]"])` have unit coverage.
-- [x] GREEN: `[escaped punctuation](#escaped-foo-bar)` in `test-gfm.md` and `[escaped punctuation](#Escaped%20Foo%20%5Bbar%5D)` in `test-native.md` both navigate to `## Escaped Foo \\[bar\\]`.
+- [x] GREEN: `github-slugger` returns `foo-bar` for `Foo \[bar\]`; `slugify("## Foo \\[bar\\]")` and `buildSlugTable(["## Foo \\[bar\\]"])` have unit coverage.
+- [x] GREEN: `[escaped punctuation](#escaped-foo-bar)` in `test-gfm.md` and `[escaped punctuation](#Escaped%20Foo%20%5Bbar%5D)` in `test-native.md` both navigate to `## Escaped Foo \[bar\]`.
 
 Manual QA on Windows desktop Obsidian, comparing the paired escaped-punctuation rows in `test-gfm.md` and `test-native.md`:
 
 | Mode | Link state | Gesture | Observed behavior | Status |
 |---|---|---|---|---|
-| Reading | rendered | click / Ctrl-click / middle-click | GFM and native links land on `## Escaped Foo \\[bar\\]`; behavior matches native. | GREEN |
-| Live Preview | rendered | click / Ctrl-click | GFM and native links land on `## Escaped Foo \\[bar\\]`; behavior matches native. | GREEN |
-| Live Preview | rendered | middle-click | GFM link lands on `## Escaped Foo \\[bar\\]`; the known plugin flicker/latency appears compared to native. | GREEN with public blocker |
+| Reading | rendered | click / Ctrl-click / middle-click | GFM and native links land on `## Escaped Foo \[bar\]`; behavior matches native. | GREEN |
+| Live Preview | rendered | click / Ctrl-click | GFM and native links land on `## Escaped Foo \[bar\]`; behavior matches native. | GREEN |
+| Live Preview | rendered | middle-click | GFM link lands on `## Escaped Foo \[bar\]`; the known plugin flicker/latency appears compared to native. | GREEN with public blocker |
 | Live Preview | unrendered | click | Places the cursor only; behavior matches native. | GREEN |
-| Live Preview | unrendered | Ctrl-click | GFM and native links land on `## Escaped Foo \\[bar\\]`; behavior matches native. | GREEN |
-| Live Preview | unrendered | middle-click | GFM link lands on `## Escaped Foo \\[bar\\]`; the known plugin flicker/latency appears compared to native. | GREEN with public blocker |
+| Live Preview | unrendered | Ctrl-click | GFM and native links land on `## Escaped Foo \[bar\]`; behavior matches native. | GREEN |
+| Live Preview | unrendered | middle-click | GFM link lands on `## Escaped Foo \[bar\]`; the known plugin flicker/latency appears compared to native. | GREEN with public blocker |
 | Source mode | unrendered | click | Places the cursor only; behavior matches native. | GREEN |
-| Source mode | unrendered | Ctrl-click | GFM and native links land on `## Escaped Foo \\[bar\\]`; behavior matches native. | GREEN |
-| Source mode | unrendered | middle-click | GFM link lands on `## Escaped Foo \\[bar\\]`; the known plugin flicker/latency appears compared to native. | GREEN with public blocker |
+| Source mode | unrendered | Ctrl-click | GFM and native links land on `## Escaped Foo \[bar\]`; behavior matches native. | GREEN |
+| Source mode | unrendered | middle-click | GFM link lands on `## Escaped Foo \[bar\]`; the known plugin flicker/latency appears compared to native. | GREEN with public blocker |
 
 Manual QA for external scheme rows in `test-gfm.md` and `test-native.md`:
 

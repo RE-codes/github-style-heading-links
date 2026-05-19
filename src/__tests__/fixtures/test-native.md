@@ -65,6 +65,6 @@ Code formatted heading body.
 
 Square-bracket heading body.
 
-## Escaped Foo \\[bar\\]
+## Escaped Foo \[bar\]
 
 Escaped punctuation heading body.

@@ -71,7 +71,8 @@ describe("slugify", () => {
   });
 
   it("slugifies escaped square-bracket punctuation like GitHub", () => {
-    expect(slugify("## Foo \\\\[bar\\\\]")).toBe("foo-bar");
+    // TS "\\[" encodes the Markdown source "\[".
+    expect(slugify("## Foo \\[bar\\]")).toBe("foo-bar");
   });
 });
 
@@ -101,7 +102,7 @@ describe("buildSlugTable", () => {
   });
 
   it("uses GitHub slugs for escaped square-bracket punctuation", () => {
-    expect(buildSlugTable(["## Foo \\\\[bar\\\\]"])).toEqual(["foo-bar"]);
+    expect(buildSlugTable(["## Foo \\[bar\\]"])).toEqual(["foo-bar"]);
   });
 });
 
