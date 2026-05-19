@@ -11,6 +11,7 @@
 [italic](#Italic%20Heading)
 [code](#code%28%29%20Heading)
 [bracketed](#API%20%5Bv2%5D)
+[escaped punctuation](#Escaped%20Foo%20%5Bbar%5D)
 
 [[Wikilink Target]]
 #reading-test-tag
@@ -63,3 +64,7 @@ Code formatted heading body.
 ## API [v2]
 
 Square-bracket heading body.
+
+## Escaped Foo \[bar\]
+
+Escaped punctuation heading body.
