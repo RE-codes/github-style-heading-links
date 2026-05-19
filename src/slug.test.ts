@@ -69,6 +69,10 @@ describe("slugify", () => {
   it("slugifies square-bracket heading text like GitHub", () => {
     expect(slugify("## API [v2]")).toBe("api-v2");
   });
+
+  it("slugifies escaped square-bracket punctuation like GitHub", () => {
+    expect(slugify("## Foo \\\\[bar\\\\]")).toBe("foo-bar");
+  });
 });
 
 describe("buildSlugTable", () => {
@@ -94,6 +98,10 @@ describe("buildSlugTable", () => {
 
   it("uses GitHub slugs for square-bracket heading text", () => {
     expect(buildSlugTable(["## API [v2]"])).toEqual(["api-v2"]);
+  });
+
+  it("uses GitHub slugs for escaped square-bracket punctuation", () => {
+    expect(buildSlugTable(["## Foo \\\\[bar\\\\]"])).toEqual(["foo-bar"]);
   });
 });
 
