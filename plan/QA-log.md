@@ -71,6 +71,25 @@ NOTE: Source-mode middle-click highlighting is slightly delayed, matching the ex
 - [x] GREEN: clicking `[code](#code-heading)` in ~~`headings-formatted.md`~~ `test-gfm.md` scrolls to ``## `code()` Heading``.
 - [x] GREEN: `test-native.md` carries the paired native Obsidian heading fragments for the same bold, italic, and code headings.
 
+### P2a Square-Bracket Heading
+
+- [x] GREEN: `github-slugger` returns `api-v2` for `API [v2]`; `slugify("## API [v2]")` and `buildSlugTable(["## API [v2]"])` have unit coverage.
+- [x] GREEN: clicking `[bracketed](#api-v2)` in `test-gfm.md` navigates to `## API [v2]`.
+- [x] GREEN: clicking `[bracketed](#API%20%5Bv2%5D)` in `test-native.md` navigates to `## API [v2]` through native Obsidian behavior.
+
+Manual QA on Windows desktop Obsidian:
+
+| Fixture | Mode/link state | Gesture | Observed behavior | Status |
+|---|---|---|---|---|
+| `test-gfm.md` | Reading rendered | click | Lands on `## API [v2]`; matches native behavior. | GREEN |
+| `test-gfm.md` | Live Preview rendered | click | Lands on `## API [v2]`; matches native behavior. | GREEN |
+| `test-native.md` | Reading rendered | click | Lands on `## API [v2]` through native Obsidian behavior. | GREEN |
+| `test-native.md` | Live Preview rendered | click | Lands on `## API [v2]` through native Obsidian behavior. | GREEN |
+
+Additional gesture sweep:
+
+- Middle-click navigation reaches the correct target, but Live Preview rendered, Live Preview unrendered, and Source mode still show the known plugin flicker/latency compared to native. Track this with the existing event-order follow-up work; the square-bracket slug itself is not the cause.
+
 ### Duplicate Headings
 
 Manual QA in `duplicates.md`:
@@ -212,7 +231,7 @@ Manual parity fixtures:
 
 - `test-gfm.md` uses GFM slug fragments such as `[same later](#another-heading)`.
 - `test-native.md` uses native Obsidian fragments such as `[same later](#Another%20Heading)`.
-- Both fixtures include cross-file links to `Other.md`, file-only links to `Other.md`, missing-file links to `Missing.md`, missing-heading links to `Other.md`, wikilink and tag non-interception rows, formatted heading links, empty-fragment links, and external scheme links for side-by-side QA.
+- Both fixtures include cross-file links to `Other.md`, file-only links to `Other.md`, missing-file links to `Missing.md`, missing-heading links to `Other.md`, wikilink and tag non-interception rows, formatted heading links, the P2a square-bracket heading link, empty-fragment links, and external scheme links for side-by-side QA.
 - The external scheme rows cover `https://`, `http://`, `mailto:`, `tel:`, `obsidian://`, `file:`, protocol-relative `//example.com`, and `data:`.
 - Native Markdown heading fragments must remain native-handled; the plugin should only handle GFM slug fragments that native Obsidian does not already resolve.
 - Both fixtures intentionally cover a top heading and a later non-duplicate heading. Duplicate heading parity is intentionally left to `duplicates.md` and future work because native Obsidian duplicate-heading behavior relies on `^` block identifiers rather than GFM slug suffixes.
@@ -255,7 +274,8 @@ Manual QA in `wikilinks.md`:
 - Hover previews for same-file and cross-file GFM fragment links still use Obsidian's native preview path and can show unresolved fragment text, e.g. unable to find `"target-heading"`.
 - File-only link Ctrl/Cmd-click parity is verified on Windows with Ctrl-click; run the same row on macOS to confirm Cmd-click behavior before public release.
 - Live Preview unrendered Ctrl-click now acts on mouse release for the consolidated empty-fragment rows; recheck the callout fixture before removing this as a broader follow-up.
-- Live Preview unrendered and Source mode middle-click show a notable visual flash in the new tab in the callout fixture, briefly appearing rendered, unrendered, then rendered. This has only been observed in `callout.md` so far. Treat this as a likely code/event-order bug, not just cosmetic polish.
+- Live Preview unrendered and Source mode middle-click show a notable visual flash in the new tab in the callout fixture, briefly appearing rendered, unrendered, then rendered. The P2a square-bracket fixture also reproduces middle-click flicker/latency in `test-gfm.md`. Treat this as a likely code/event-order bug, not just cosmetic polish.
+- The P2a square-bracket heading fixture reproduces the middle-click flicker/latency follow-up in `test-gfm.md`: Live Preview rendered, Live Preview unrendered, and Source mode navigate correctly but are visually delayed compared to native.
 - Source mode Ctrl-click now acts on mouse release for the consolidated empty-fragment rows; recheck the callout fixture before removing this as a broader follow-up.
 - Live Preview unrendered and Source mode middle-click have a slight delay before the new tab highlights the target heading plus children. Accepted for MVP, but treat this as a likely event-order or retargeting timing issue.
 - Context-menu "Open in new tab" and "Open to the right" on GFM fragment links open the target file but do not navigate to or highlight the target heading. Observed on a rendered Live Preview link; scope across modes and fixtures not yet verified.

@@ -10,6 +10,7 @@
 [bold](#bold-heading)
 [italic](#italic-heading)
 [code](#code-heading)
+[bracketed](#api-v2)
 
 [[Wikilink Target]]
 #reading-test-tag
@@ -58,3 +59,7 @@ Italic formatted heading body.
 ## `code()` Heading
 
 Code formatted heading body.
+
+## API [v2]
+
+Square-bracket heading body.
