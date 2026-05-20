@@ -74,6 +74,14 @@ describe("slugify", () => {
     // TS "\\[" encodes the Markdown source "\[".
     expect(slugify("## Foo \\[bar\\]")).toBe("foo-bar");
   });
+
+  it("slugifies setext H1 headings (=== underline) like ATX", () => {
+    expect(slugify("Heading\n=======")).toBe("heading");
+  });
+
+  it("slugifies setext H2 headings (--- underline) like ATX", () => {
+    expect(slugify("Heading\n-------")).toBe("heading");
+  });
 });
 
 describe("buildSlugTable", () => {

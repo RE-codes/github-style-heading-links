@@ -264,6 +264,26 @@ Manual QA on Windows desktop Obsidian, comparing the paired escaped-punctuation 
 | Source mode | unrendered | Ctrl-click | GFM and native links land on `## Escaped Foo \[bar\]`; behavior matches native. | GREEN |
 | Source mode | unrendered | middle-click | GFM link lands on `## Escaped Foo \[bar\]`; the known plugin flicker/latency appears compared to native. | GREEN with public blocker |
 
+### P2a Setext Heading
+
+- [x] GREEN: `slugify("Heading\n=======")` and `slugify("Heading\n-------")` have unit coverage; `stripMarkdown` strips trailing setext underlines defensively.
+- [x] GREEN: Obsidian's `HeadingCache` reports setext headings as `{ heading: "Setext H1", level: 1 }` and `{ heading: "Setext H2", level: 2 }` — underline already stripped, so the `stripMarkdown` setext regex is defense-in-depth rather than load-bearing in production.
+- [x] GREEN: `[setext h1](#setext-h1)` / `[setext h2](#setext-h2)` in `test-gfm.md` and `[setext h1](#Setext%20H1)` / `[setext h2](#Setext%20H2)` in `test-native.md` navigate to the `Setext H1` and `Setext H2` headings respectively.
+
+Manual QA on Windows desktop Obsidian, comparing the paired setext-heading rows in `test-gfm.md` and `test-native.md`:
+
+| Mode | Link state | Gesture | Observed behavior | Status |
+|---|---|---|---|---|
+| Reading | rendered | click / Ctrl-click / middle-click | GFM and native links land on `Setext H1` / `Setext H2`; behavior matches native. | GREEN |
+| Live Preview | rendered | click / Ctrl-click | GFM and native links land on `Setext H1` / `Setext H2`; behavior matches native. | GREEN |
+| Live Preview | rendered | middle-click | GFM links land on `Setext H1` / `Setext H2`; the known plugin flicker/latency appears compared to native. | GREEN with public blocker |
+| Live Preview | unrendered | click | Places the cursor only; behavior matches native. | GREEN |
+| Live Preview | unrendered | Ctrl-click | GFM and native links land on `Setext H1` / `Setext H2`; behavior matches native. | GREEN |
+| Live Preview | unrendered | middle-click | GFM links land on `Setext H1` / `Setext H2`; the known plugin flicker/latency appears compared to native. | GREEN with public blocker |
+| Source mode | unrendered | click | Places the cursor only; behavior matches native. | GREEN |
+| Source mode | unrendered | Ctrl-click | GFM and native links land on `Setext H1` / `Setext H2`; behavior matches native. | GREEN |
+| Source mode | unrendered | middle-click | GFM links land on `Setext H1` / `Setext H2`; the known plugin flicker/latency appears compared to native. | GREEN with public blocker |
+
 Manual QA for external scheme rows in `test-gfm.md` and `test-native.md`:
 
 | Scheme | Modes | Gestures | Observed behavior | Status |

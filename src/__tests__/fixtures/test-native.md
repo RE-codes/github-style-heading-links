@@ -12,6 +12,8 @@
 [code](#code%28%29%20Heading)
 [bracketed](#API%20%5Bv2%5D)
 [escaped punctuation](#Escaped%20Foo%20%5Bbar%5D)
+[setext h1](#Setext%20H1)
+[setext h2](#Setext%20H2)
 
 [[Wikilink Target]]
 #reading-test-tag
@@ -68,3 +70,13 @@ Square-bracket heading body.
 ## Escaped Foo \[bar\]
 
 Escaped punctuation heading body.
+
+Setext H1
+=========
+
+Setext H1 body.
+
+Setext H2
+---------
+
+Setext H2 body.
