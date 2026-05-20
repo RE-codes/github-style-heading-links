@@ -3,7 +3,7 @@ import GithubSlugger from "github-slugger";
 export function stripMarkdown(raw: string): string {
   return raw
     .replace(/^#+\s*/, "")
-    .replace(/\n[ \t]*[=-]+[ \t]*$/, "")
+    .replace(/\n[ \t]*[=-]+[ \t]*(?=\n|$)/, "")
     .replace(/`([^`]*)`/g, "$1")
     .replace(/!\[[^\]]*\]\([^)]+\)/g, "")
     .replace(/\[([^\]]*)\]\([^)]+\)/g, "$1")
