@@ -78,11 +78,13 @@ describe("slugify", () => {
   it("slugifies setext H1 headings (=== underline) like ATX", () => {
     expect(slugify("Heading\n=======")).toBe("heading");
     expect(slugify("Heading\n=======\n")).toBe("heading");
+    expect(slugify("Heading\r\n=======\r\n")).toBe("heading");
   });
 
   it("slugifies setext H2 headings (--- underline) like ATX", () => {
     expect(slugify("Heading\n-------")).toBe("heading");
     expect(slugify("Heading\n-------\n")).toBe("heading");
+    expect(slugify("Heading\r\n-------\r\n")).toBe("heading");
   });
 });
 
