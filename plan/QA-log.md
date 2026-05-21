@@ -284,6 +284,25 @@ Manual QA on Windows desktop Obsidian, comparing the paired setext-heading rows 
 | Source mode | unrendered | Ctrl-click | GFM and native links land on `Setext H1` / `Setext H2`; behavior matches native. | GREEN |
 | Source mode | unrendered | middle-click | GFM links land on `Setext H1` / `Setext H2`; the known plugin flicker/latency appears compared to native. | GREEN with public blocker |
 
+### P2a Parenthesized Heading
+
+- [x] GREEN: `slugify("## Function foo(bar)")` and `buildSlugTable(["## Function foo(bar)"])` have unit coverage producing `function-foobar`. Parentheses are stripped by `github-slugger` with no separator inserted; `stripMarkdown` needs no change.
+- [x] GREEN: `[parens](#function-foobar)` in `test-gfm.md` and `[parens](#Function%20foo%28bar%29)` in `test-native.md` navigate to the `## Function foo(bar)` heading.
+
+Manual QA on Windows desktop Obsidian, comparing the paired parenthesized-heading rows in `test-gfm.md` and `test-native.md`:
+
+| Mode | Link state | Gesture | Observed behavior | Status |
+|---|---|---|---|---|
+| Reading | rendered | click / Ctrl-click / middle-click | GFM and native links land on `## Function foo(bar)`; behavior matches native. | GREEN |
+| Live Preview | rendered | click / Ctrl-click | GFM and native links land on `## Function foo(bar)`; behavior matches native. | GREEN |
+| Live Preview | rendered | middle-click | GFM links land on `## Function foo(bar)`; the known plugin flicker/latency appears compared to native. | GREEN with public blocker |
+| Live Preview | unrendered | click | Places the cursor only; behavior matches native. | GREEN |
+| Live Preview | unrendered | Ctrl-click | GFM and native links land on `## Function foo(bar)`; behavior matches native. | GREEN |
+| Live Preview | unrendered | middle-click | GFM links land on `## Function foo(bar)`; the known plugin flicker/latency appears compared to native. | GREEN with public blocker |
+| Source mode | unrendered | click | Places the cursor only; behavior matches native. | GREEN |
+| Source mode | unrendered | Ctrl-click | GFM and native links land on `## Function foo(bar)`; behavior matches native. | GREEN |
+| Source mode | unrendered | middle-click | GFM links land on `## Function foo(bar)`; the known plugin flicker/latency appears compared to native. | GREEN with public blocker |
+
 Manual QA for external scheme rows in `test-gfm.md` and `test-native.md`:
 
 | Scheme | Modes | Gestures | Observed behavior | Status |

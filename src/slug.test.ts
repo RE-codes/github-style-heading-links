@@ -75,6 +75,10 @@ describe("slugify", () => {
     expect(slugify("## Foo \\[bar\\]")).toBe("foo-bar");
   });
 
+  it("slugifies parenthesized heading text like GitHub", () => {
+    expect(slugify("## Function foo(bar)")).toBe("function-foobar");
+  });
+
   it("slugifies setext H1 headings (=== underline) like ATX", () => {
     expect(slugify("Heading\n=======")).toBe("heading");
     expect(slugify("Heading\n=======\n")).toBe("heading");
@@ -115,6 +119,10 @@ describe("buildSlugTable", () => {
 
   it("uses GitHub slugs for escaped square-bracket punctuation", () => {
     expect(buildSlugTable(["## Foo \\[bar\\]"])).toEqual(["foo-bar"]);
+  });
+
+  it("uses GitHub slugs for parenthesized heading text", () => {
+    expect(buildSlugTable(["## Function foo(bar)"])).toEqual(["function-foobar"]);
   });
 });
 
