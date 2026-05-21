@@ -14,6 +14,7 @@
 [escaped punctuation](#Escaped%20Foo%20%5Bbar%5D)
 [setext h1](#Setext%20H1)
 [setext h2](#Setext%20H2)
+[parens](#Function%20foo%28bar%29)
 
 [[Wikilink Target]]
 #reading-test-tag
@@ -80,3 +81,7 @@ Setext H2
 ---------
 
 Setext H2 body.
+
+## Function foo(bar)
+
+Parenthesized heading body.
