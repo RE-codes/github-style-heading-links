@@ -179,10 +179,19 @@ Files likely touched:
 - `plan/QA-log.md`
 - `src/editorModeHandler.test.ts`
 - Optionally a new `src/editorGesture.test-support.ts`
+- e2e Phase 0 spike harness: `wdio.conf.mts`, `test/vaults/parity/`, a throwaway driver spec (see [`plan/e2e-automation-prd.md`](./e2e-automation-prd.md) §9)
 
 Smallest safe change:
 
 - Run the event tracing procedure before adding new characterization tests. Translate each confirmed event sequence into one focused test.
+
+### e2e Phase 0 spike as the trace driver
+
+The native-event tracer (Epic #32 / `nativeEventTracer.ts`, Issue #33) is the *logger*. The e2e PRD's Phase 0 spike — a minimal WebdriverIO + `wdio-obsidian-service` harness ([`plan/e2e-automation-prd.md`](./e2e-automation-prd.md) §9) — is the *driver*: it launches a clean, plugin-only sandboxed Obsidian, switches Reading / Live Preview / Source, toggles the plugin off (the tracer's required plugin-disabled mode, step 2 of the procedure), and dispatches trusted click / Ctrl-click / middle-click gestures. Running the trace matrix through it yields the deterministic, repeatable, multi-sample runs the investigation needs (≥3 samples for timing rows), where hand-gestures are noisy.
+
+This is the only investigation work that builds harness code rather than just measuring. Scope it to the spike's four unknowns only — gesture dispatch, mode switching, plugin toggle, rendered-vs-unrendered control — and do **not** build the e2e assertion/parity suite here. That suite comes *after* the investigation, informed by its findings, as the characterization net for the Phase 5–10 refactor (it is black-box, so it survives the restructure better than the implementation-coupled sequence tests in Phase 4).
+
+Caveat: drive ordering-sensitive rows (which event fires first, leaf-open vs `auxclick`) through the harness freely — Obsidian determines event order regardless of how the gesture was initiated. Cross-check absolute timing-*magnitude* rows (e.g. the middle-click delay) against a manual gesture, since automated input dispatch can perturb latency.
 
 Validation:
 
