@@ -20,6 +20,7 @@ This is not a replacement for `plan/native-event-investigation.md`. This matrix 
 - **P2b**: MVP source-mode parser coverage that should land after `linkExtraction.ts` is extracted.
 - **P3**: Public-release readiness coverage.
 - **P4**: Lowest priority public-release readiness or documentation coverage.
+- **Platform gestures (macOS)**: Obsidian's documented open-in-new-tab gesture is `Ctrl`+click, or `Cmd`+click on macOS ([Tabs help](https://obsidian.md/help/tabs)). macOS has no native middle-click on Apple trackpads or the Magic Mouse (third-party tools required), and middle-click is not a documented Obsidian gesture, so middle-click rows in this matrix map to `Cmd`+click when verifying on macOS.
 
 P1, P2a, and P2b items are considered MVP scope. P3 and P4 items are considered public-release readiness scope.
 
@@ -131,7 +132,7 @@ P4 items are lower-priority public-release polish or documentation:
 | P2a | Heading with link, e.g. `## See [docs](url)` | Slug uses link text. | Slug unit coverage exists for link stripping; manual QA not explicit. | Partial | Add fixture row. |
 | P2a | Heading with image, e.g. `## ![alt](img.png) Title` | Slug should ignore or handle image consistently with GitHub. | Slug unit coverage exists for image stripping; manual QA not explicit. | Partial | Add fixture row. |
 | P2a | Heading with HTML/entities, e.g. `## Fish &amp; Chips`, `## <code>x</code>` | Match GFM/Obsidian rendered heading text. | HTML tag stripping unit coverage exists; entities not explicit. | Partial | Add fixture row. |
-| P2a | Heading with strikethrough, e.g. `## ~~Old~~ New` | Match GFM slug. | Not verified. | Unknown | GFM extension. |
+| P2a | Heading with strikethrough, e.g. `## ~~Old~~ New` | Match GFM slug. | Works in paired `test-gfm.md` / `test-native.md` fixtures; `github-slugger`, `slugify`, and `buildSlugTable` produce `old-new` with no `stripMarkdown` change needed (the slugger strips the `~~` markers). macOS QA: Reading, Live Preview rendered, Live Preview source text, and Source mode all match native across plain click and Cmd-click, including cursor-only behavior on source-text plain click; the native `#~~Old~~%20New` link stays native-handled with the plugin on. | GREEN | Verified on macOS desktop. Middle-click N/A on macOS (no native middle button); Cmd-click covers open-in-new-tab. GitHub parity accepted via `github-slugger` as the reference algorithm rather than a live github.com check. |
 | P2a | Heading with non-ASCII/accented text, e.g. `## Café` | Match GFM slug and URL-decoded fragment. | Not verified. | Unknown | Pair with percent-encoded fragment test. |
 | P2a | Heading with emoji | Match GFM slug behavior. | Slug unit coverage exists for emoji. | Partial | Manual QA not explicit. |
 
