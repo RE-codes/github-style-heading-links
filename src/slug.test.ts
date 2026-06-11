@@ -79,6 +79,11 @@ describe("slugify", () => {
     expect(slugify("## Function foo(bar)")).toBe("function-foobar");
   });
 
+  it("slugifies strikethrough heading text like GitHub", () => {
+    // github-slugger strips the `~~` GFM markers itself; no stripMarkdown change needed.
+    expect(slugify("## ~~Old~~ New")).toBe("old-new");
+  });
+
   it("slugifies setext H1 headings (=== underline) like ATX", () => {
     expect(slugify("Heading\n=======")).toBe("heading");
     expect(slugify("Heading\n=======\n")).toBe("heading");
@@ -123,6 +128,10 @@ describe("buildSlugTable", () => {
 
   it("uses GitHub slugs for parenthesized heading text", () => {
     expect(buildSlugTable(["## Function foo(bar)"])).toEqual(["function-foobar"]);
+  });
+
+  it("uses GitHub slugs for strikethrough heading text", () => {
+    expect(buildSlugTable(["## ~~Old~~ New"])).toEqual(["old-new"]);
   });
 });
 

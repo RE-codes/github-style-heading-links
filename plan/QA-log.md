@@ -303,6 +303,24 @@ Manual QA on Windows desktop Obsidian, comparing the paired parenthesized-headin
 | Source mode | unrendered | Ctrl-click | GFM and native links land on `## Function foo(bar)`; behavior matches native. | GREEN |
 | Source mode | unrendered | middle-click | GFM links land on `## Function foo(bar)`; the known plugin flicker/latency appears compared to native. | GREEN with public blocker |
 
+### P2a Strikethrough Heading
+
+- [x] GREEN: `github-slugger` returns `old-new` for `~~Old~~ New`; `slugify("## ~~Old~~ New")` and `buildSlugTable(["## ~~Old~~ New"])` have unit coverage. The `~~` markers are stripped by `github-slugger` with no separator inserted; `stripMarkdown` needs no change.
+- [x] GREEN: `[strikethrough](#old-new)` in `test-gfm.md` and `[strikethrough](#~~Old~~%20New)` in `test-native.md` both navigate to `## ~~Old~~ New`.
+
+Manual QA on macOS desktop Obsidian, comparing the paired strikethrough rows in `test-gfm.md` and `test-native.md`:
+
+| Mode | Link state | Gesture | Observed behavior | Status |
+|---|---|---|---|---|
+| Reading | rendered | click / Cmd-click | GFM and native links land on `## ~~Old~~ New`; behavior matches native. | GREEN |
+| Live Preview | rendered | click / Cmd-click | GFM and native links land on `## ~~Old~~ New`; behavior matches native. | GREEN |
+| Live Preview | unrendered | click | Places the cursor only; behavior matches native. | GREEN |
+| Live Preview | unrendered | Cmd-click | GFM and native links land on `## ~~Old~~ New`; behavior matches native. | GREEN |
+| Source mode | unrendered | click | Places the cursor only; behavior matches native. | GREEN |
+| Source mode | unrendered | Cmd-click | GFM and native links land on `## ~~Old~~ New`; behavior matches native. | GREEN |
+
+Middle-click rows are not applicable on macOS (no native middle button); Cmd-click covers open-in-new-tab. The middle-click flicker/latency tracked for the Windows P2a square-bracket fixture was therefore not exercised on this platform.
+
 Manual QA for external scheme rows in `test-gfm.md` and `test-native.md`:
 
 | Scheme | Modes | Gestures | Observed behavior | Status |

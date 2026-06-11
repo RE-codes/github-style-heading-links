@@ -15,6 +15,7 @@
 [setext h1](#Setext%20H1)
 [setext h2](#Setext%20H2)
 [parens](#Function%20foo%28bar%29)
+[strikethrough](#~~Old~~%20New)
 
 [[Wikilink Target]]
 #reading-test-tag
@@ -85,3 +86,7 @@ Setext H2 body.
 ## Function foo(bar)
 
 Parenthesized heading body.
+
+## ~~Old~~ New
+
+Strikethrough heading body.
