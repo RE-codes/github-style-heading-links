@@ -16,6 +16,7 @@
 [setext h2](#Setext%20H2)
 [parens](#Function%20foo%28bar%29)
 [strikethrough](#~~Old~~%20New)
+[markdown image](#![alt](image.png)%20Title)
 
 [[Wikilink Target]]
 #reading-test-tag
@@ -90,3 +91,7 @@ Parenthesized heading body.
 ## ~~Old~~ New
 
 Strikethrough heading body.
+
+## ![alt](image.png) Title
+
+Markdown-image heading body.

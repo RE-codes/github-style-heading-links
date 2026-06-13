@@ -84,6 +84,10 @@ describe("slugify", () => {
     expect(slugify("## ~~Old~~ New")).toBe("old-new");
   });
 
+  it("removes markdown images before slugifying heading text", () => {
+    expect(slugify("## ![alt](img.png) Title")).toBe("title");
+  });
+
   it("slugifies setext H1 headings (=== underline) like ATX", () => {
     expect(slugify("Heading\n=======")).toBe("heading");
     expect(slugify("Heading\n=======\n")).toBe("heading");
@@ -132,6 +136,10 @@ describe("buildSlugTable", () => {
 
   it("uses GitHub slugs for strikethrough heading text", () => {
     expect(buildSlugTable(["## ~~Old~~ New"])).toEqual(["old-new"]);
+  });
+
+  it("removes markdown images when building a slug table", () => {
+    expect(buildSlugTable(["## ![alt](img.png) Title"])).toEqual(["title"]);
   });
 });
 
