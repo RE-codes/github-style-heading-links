@@ -321,6 +321,24 @@ Manual QA on macOS desktop Obsidian, comparing the paired strikethrough rows in 
 
 Middle-click rows are not applicable on macOS (no native middle button); Cmd-click covers open-in-new-tab. The middle-click flicker/latency tracked for the Windows P2a square-bracket fixture was therefore not exercised on this platform.
 
+### P2a Markdown-Image Heading
+
+- [x] GREEN: `slugify("## ![alt](img.png) Title")` and `buildSlugTable(["## ![alt](img.png) Title"])` have unit coverage producing `title`. `stripMarkdown` removes the image entirely before slugging.
+- [x] GREEN: `[markdown image](#title)` in `test-gfm.md` and `[markdown image](#![alt](image.png)%20Title)` in `test-native.md` both navigate to `## ![alt](image.png) Title`.
+
+NOTE: Issue #22 manual QA was performed on macOS, so the gesture coverage below is plain click and Cmd-click. The broader project matrix was primarily verified on Windows and includes middle-click; those middle-click rows were not repeated for this issue.
+
+| Mode | Link state | Gesture | Observed behavior | Status |
+|---|---|---|---|---|
+| Reading | rendered | click / Cmd-click | GFM and native links land on `## ![alt](image.png) Title`; behavior matches native. | GREEN |
+| Live Preview | rendered | click / Cmd-click | GFM and native links land on `## ![alt](image.png) Title`; behavior matches native. | GREEN |
+| Live Preview | unrendered | click | Places the cursor only; behavior matches native. | GREEN |
+| Live Preview | unrendered | Cmd-click | GFM and native links land on `## ![alt](image.png) Title`; behavior matches native. | GREEN |
+| Source mode | unrendered | click | Places the cursor only; behavior matches native. | GREEN |
+| Source mode | unrendered | Cmd-click | GFM and native links land on `## ![alt](image.png) Title`; behavior matches native. | GREEN |
+
+GitHub parity uses `github-slugger`, the plugin's reference algorithm, because GitHub's Markdown rendering API does not include generated heading IDs.
+
 Manual QA for external scheme rows in `test-gfm.md` and `test-native.md`:
 
 | Scheme | Modes | Gestures | Observed behavior | Status |
